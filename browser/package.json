@@ -1,0 +1,17 @@
+{
+  "name": "@hachitech/antidetect-browser-runtime",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "test": "node --test ../tests/frontend/*.test.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "less": "4.4.2"
+  }
+}

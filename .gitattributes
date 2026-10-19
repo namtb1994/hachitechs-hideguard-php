@@ -1,0 +1,11 @@
+/tests export-ignore
+/.github export-ignore
+/phpunit.xml.dist export-ignore
+/phpstan.neon.dist export-ignore
+/composer.lock export-ignore
+
+/browser/src export-ignore
+/browser/build.mjs export-ignore
+/browser/publish-magento.mjs export-ignore
+/browser/package.json export-ignore
+/browser/package-lock.json export-ignore

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php" colors="true" failOnWarning="true">
+    <testsuites>
+        <testsuite name="Core"><directory>tests/Unit</directory></testsuite>
+        <testsuite name="Storage"><directory>tests/Contract</directory></testsuite>
+        <testsuite name="MySQL"><directory>tests/Integration</directory></testsuite>
+    </testsuites>
+</phpunit>

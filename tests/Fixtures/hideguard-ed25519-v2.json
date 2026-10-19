@@ -1,0 +1,190 @@
+{
+  "source": "Real HideGuard vector from Shopify payment-bootstrap.test.mjs; generated vectors signed independently with Node crypto, without storing the private key.",
+  "real": {
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAQXLS7j+tppqbZp00nnr78na3G6llNj62E3QG9zDCFaI=\n-----END PUBLIC KEY-----",
+    "payload": {
+      "siteId": "site_2DToI81Qk32V",
+      "environment": "development",
+      "requestId": "c5f6f994-db1c-4f32-9c2b-fc4e6bfd52e8",
+      "visitorId": "add8d2406a54882a335df1bde5baa925",
+      "verdict": "challenge",
+      "score": 35,
+      "reasons": [
+        {
+          "code": "inspectorAttached",
+          "detail": "paused-debugger"
+        }
+      ],
+      "heartbeatIntervalMs": 15000,
+      "hiddenHeartbeatIntervalMs": 60000,
+      "signature": "v=2,alg=ed25519,kid=hg_ws_E1XPx6yxV3LKCUI1_202610,t=1791800431,sig=WwGOqM-pkyerZf7Mx_5QlnqgLXpQY5YaoPwR_Jrv-4x27-S_2PWrEwmhKKUpfnN0vTkIWKQgVGUvlpRaYaWOAw"
+    }
+  },
+  "generated": {
+    "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAs9nV9bQn8R22jnUtFFX3BgNCb/UWyxwone4yyPymKmM=\n-----END PUBLIC KEY-----\n",
+    "responses": [
+      {
+        "siteId": "site_example",
+        "environment": "development",
+        "requestId": "request.development:allow",
+        "visitorId": "visitor.1:test",
+        "verdict": "allow",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=A-GhUW06knc8MPcRJJOJAp1Jy95smjhrtmZNLY0QAcHz8y8vhsPA62VP8fofA7IbZ2v5PcNkUrjdbyTxv3E_AQ"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "development",
+        "requestId": "request.development:challenge",
+        "visitorId": "visitor.1:test",
+        "verdict": "challenge",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=d99tHhzYncg15ZuRtwP_XZuU0K9gC52Y1ZaiKfBrBKHPhKpb-fchKwm8CGKwfpeLRJsxQ4oJ9W5HyXkq09wkBw"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "development",
+        "requestId": "request.development:block",
+        "visitorId": "visitor.1:test",
+        "verdict": "block",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=iJd4ayNWQd6p20sfj0rHVOuepOZlAHekuQO9D_BLi7TQcZ9WHlBF9sGbAOwBBymyYiQ3I52y7Q88MQOS-hm3CA"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "staging",
+        "requestId": "request.staging:allow",
+        "visitorId": "visitor.1:test",
+        "verdict": "allow",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=dYeuBriZWM0MtqchfQEWrv0mJK0lADRbhB9SMHFommxcGVYYkVwvwKuvTy42R5m8ZffsPIdomfCmwTTmCZJyAQ"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "staging",
+        "requestId": "request.staging:challenge",
+        "visitorId": "visitor.1:test",
+        "verdict": "challenge",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=F_LIJKnA7x9k3QCKC6TQN3-NXTfTtvWSjSPy4itwhO4Q24TOhdcKpRNCM37eXxvMjdX_vapiAL6vIyvWZ1OTDw"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "staging",
+        "requestId": "request.staging:block",
+        "visitorId": "visitor.1:test",
+        "verdict": "block",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=gBYp6JRofaRj2lSNucIVh32D2Lf3AwOCxwWqQBXsdhmtWEKfZ1QFtN15TeH4rvw7Hv0hv8BB9UsEsic_fHZ0Bg"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "production",
+        "requestId": "request.production:allow",
+        "visitorId": "visitor.1:test",
+        "verdict": "allow",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=ak-flXKkICdNYU2ArQqdOjWCoYAtOqW0pWWT9axFaRApb3QM0srP6hjfbco0ixd5VjrozkELJQ0jMwodNGM2Dw"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "production",
+        "requestId": "request.production:challenge",
+        "visitorId": "visitor.1:test",
+        "verdict": "challenge",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=KlbS4Mxlv-5__kxFQTjhZLg6ckTGRJdEsYe8X20c5LRCeEXAb7KXJzSuqsgsWvOTwfc2KO-pZCNp0ITRfuGNAA"
+      },
+      {
+        "siteId": "site_example",
+        "environment": "production",
+        "requestId": "request.production:block",
+        "visitorId": "visitor.1:test",
+        "verdict": "block",
+        "score": 35,
+        "reasons": [
+          {
+            "code": "inspectorAttached",
+            "detail": "unsigned display text"
+          },
+          {
+            "code": "second-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=hg_test,t=1791800431,sig=AmaLXjNY-06LQmdMgS9ZjRcTiXqixJmIWqFiU6KClwJ_86XzAWpU207xJJd5Xe2bqPx23PPK2-iKHtB_JqzNDw"
+      }
+    ]
+  }
+}

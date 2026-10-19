@@ -1,0 +1,6 @@
+/vendor/
+/.phpunit.result.cache
+/.phpstan-cache/
+/composer.lock
+
+/browser/node_modules/

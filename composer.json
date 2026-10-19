@@ -1,0 +1,56 @@
+{
+    "name": "hachitech/antidetect-php",
+    "description": "Framework independent HideGuard access protection for PHP",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "psr/clock": "^1.0",
+        "psr/log": "^1.1 || ^2.0 || ^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6",
+        "phpstan/phpstan": "^1.12",
+        "squizlabs/php_codesniffer": "^3.13"
+    },
+    "suggest": {
+        "ext-sodium": "Required when using HideGuard Ed25519 response verification",
+        "ext-pdo_mysql": "Required only when using the MySQL PDO storage driver"
+    },
+    "autoload": {
+        "psr-4": {
+            "Hachitech\\Antidetect\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Hachitech\\Antidetect\\Tests\\": "tests/"
+        }
+    },
+    "archive": {
+        "exclude": [
+            "/vendor",
+            "/tests",
+            "/.github",
+            "/.phpstan-cache",
+            "/.phpunit.result.cache",
+            "/composer.lock",
+            "/phpunit.xml.dist",
+            "/phpstan.neon.dist",
+            "/browser/node_modules",
+            "/browser/src",
+            "/browser/build.mjs",
+            "/browser/publish-magento.mjs",
+            "/browser/package.json",
+            "/browser/package-lock.json"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse",
+        "lint": "phpcs --standard=PSR12 src tests examples"
+    }
+}
