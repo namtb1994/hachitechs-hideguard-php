@@ -7,6 +7,7 @@ namespace Hachitech\Antidetect\Configuration;
 use Hachitech\Antidetect\Access\BrowserState;
 use Hachitech\Antidetect\Exceptions\FailureReason;
 use Hachitech\Antidetect\Exceptions\GuardException;
+use Hachitech\Antidetect\Support\EndpointUrl;
 
 final class ProtectionPolicy
 {
@@ -36,7 +37,7 @@ final class ProtectionPolicy
         string $endpointUrl = self::DEFAULT_ENDPOINT_URL,
         public readonly int $verificationTimeout = 35
     ) {
-        $this->endpointUrl = self::normalizeEndpointUrl($endpointUrl);
+        $this->endpointUrl = EndpointUrl::normalize($endpointUrl);
         if (
             !in_array($environment, self::ENVIRONMENTS, true)
             || !in_array($blockDuration, self::BLOCK_DURATIONS, true)
@@ -65,27 +66,6 @@ final class ProtectionPolicy
         ) {
             throw new GuardException(FailureReason::InvalidConfiguration, 'The active environment requires keys.');
         }
-    }
-
-    private static function normalizeEndpointUrl(string $value): string
-    {
-        $url = trim($value, " \t\n\r\v\f");
-        $parts = parse_url($url);
-        if (
-            strlen($value) > 2048 || filter_var($url, FILTER_VALIDATE_URL) === false
-            || str_contains($url, '\\') || preg_match('/[\x00-\x20\x7f]/', $url)
-            || $parts === false || !isset($parts['host']) || strtolower($parts['scheme'] ?? '') !== 'https'
-            || isset($parts['user']) || isset($parts['pass'])
-            || !in_array($parts['path'] ?? '', ['', '/'], true)
-            || isset($parts['query']) || isset($parts['fragment'])
-        ) {
-            throw new GuardException(
-                FailureReason::InvalidConfiguration,
-                'HideGuard URL must be an HTTPS origin without a path, credentials, query or fragment.'
-            );
-        }
-        $port = isset($parts['port']) && $parts['port'] !== 443 ? ':' . $parts['port'] : '';
-        return 'https://' . strtolower($parts['host']) . $port;
     }
 
     public function protects(string $point): bool

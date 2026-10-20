@@ -5,7 +5,9 @@ package is extracted from `Hachitech_AntidetectBrowser`.
 It has not been published to a Composer registry.
 
 Production dependencies are only PHP, `psr/clock` and `psr/log`. No Magento,
-WordPress, Laravel, Symfony, container, HTTP client or ORM is required.
+WordPress, Laravel, Symfony, container, third-party HTTP client or ORM is required.
+The optional server-side verdict client uses `ext-curl` by default, or an injected
+HTTP transport supplied by the application.
 The shared browser runtime ships as prebuilt ESM/AMD. The Magento module now
 uses this core through native adapters. A separate
 [WordPress plugin](../antidetect-wordpress/README.md) and
@@ -36,6 +38,74 @@ this directory, pin its development version, and require the library:
 
 Use the eventual registry/repository release instead of this path configuration
 when distributing adapters. Installation does not initialize tables or assets.
+
+## Call the verdict API from any PHP application
+
+`VerdictClient` needs only the base URL, server-side API key and visitor ID. It
+does not require Guard, database storage, a session or a framework bootstrap.
+
+```php
+use Hachitech\Antidetect\Exceptions\ApiException;
+use Hachitech\Antidetect\VerdictClient;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$client = new VerdictClient(
+    baseUrl: 'https://dev.hideguard.io',
+    apiKey: $apiKeyFromServerConfiguration
+);
+
+try {
+    $response = $client->getVerdict('a313d75f78dc6dabb6e5138cbf341fe4');
+    // $response is the entire API response as an associative PHP array.
+    // Nested JSON objects are arrays too; no response fields are discarded.
+} catch (ApiException $error) {
+    // null for transport failures; the HTTP status for HTTP/response failures.
+    $httpStatus = $error->statusCode;
+    // Let the application decide how to handle an unavailable verdict.
+}
+```
+
+Each call sends `POST {baseUrl}/api/v1/verdict` with `x-api-key`,
+`Content-Type: application/json`, `Accept: application/json` and
+`{"visitorId":"..."}`. Supply an HTTPS origin, optionally with a port/root slash;
+do not include `/api/v1/verdict` in `baseUrl`. Keep the API key in server-side
+configuration. The visitor ID is an opaque, non-empty UTF-8 string without
+control characters. Invalid URL/key/visitor arguments throw `GuardException`.
+
+Successful 2xx JSON objects/lists become PHP arrays. Invalid JSON, scalar/empty
+responses, HTTP errors, redirects and network failures throw `ApiException`.
+Large JSON integers outside PHP's integer range remain strings. The default
+transport verifies TLS, supports gzip/deflate, does not follow redirects or retry,
+and uses a 3-second connect timeout and 10-second total timeout. To change them:
+
+```php
+$client = new VerdictClient($baseUrl, $apiKey, new \Hachitech\Antidetect\Http\CurlTransport(
+    timeoutSeconds: 15,
+    connectTimeoutSeconds: 5
+));
+```
+
+Use the same client in a **Magento module** after requiring this package in the
+Magento Composer project. Construct it in the module's service/factory with
+values from the module's server-side configuration, or configure those constructor
+arguments through Magento DI, then call `getVerdict($visitorId)` in that service.
+
+For a **WordPress plugin**, require this package in the plugin's Composer project,
+load its `vendor/autoload.php` once from the plugin bootstrap, then use the same
+constructor and method in the plugin's PHP code. Both platforms can use the
+default cURL transport directly.
+
+If a platform must use its own HTTP client, implement
+`Hachitech\Antidetect\Contracts\HttpTransport::post()` and pass it as the third
+constructor argument. It receives the URL, header map and JSON string, and returns
+`Http\HttpResponse($statusCode, $body)`. Enforce TLS verification, finite timeouts,
+no redirects and no automatic retries; translate transport failures to
+`ApiException`. The library handles HTTP status validation and JSON decoding.
+No Magento/WordPress HTTP dependency is added to the package.
+
+This method fetches a verdict only. It does not change Guard grants, blocks or
+signature verification; the application chooses how to use the returned data.
 
 ## Use from plain PHP
 

@@ -2,6 +2,9 @@
 
 ## 0.1.0 — Unreleased
 
+- Add a framework-independent `VerdictClient` for `POST /api/v1/verdict`, with
+  configurable HTTPS base URL/API key, visitor ID input, complete array responses,
+  explicit API errors and an optional cURL or application-provided HTTP transport.
 - Extract framework-independent PHP 8.1 contracts, factory, typed policy/context/
   decision, access checks, grant/block deadlines and trusted resource enforcement.
 - Add explicit PDO MySQL 8/InnoDB storage, atomic scope locking, rate/capacity

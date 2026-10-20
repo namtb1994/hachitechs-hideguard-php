@@ -17,6 +17,7 @@ contact HideGuard. Configuration, identity and storage come from the application
 | `revokeScope(scopeId)` | Revoke grants and bindings while retaining block state |
 | `resetBlocks(scopeId)` | Clear persisted identity/session blocks in that scope; unrelated grants are retained |
 | `cleanup(scopeId, policy)` | Remove expired block/rate records and stale sessions without deleting active grants/blocks |
+| `VerdictClient::getVerdict(visitorId)` | Explicit server-side POST to `/api/v1/verdict`; return the full JSON object/list as PHP arrays without storage/Guard mutation |
 
 Domain deadlines are Unix **seconds**, from an injected PSR-20 clock.
 `AccessDecision::toBrowserArray()` converts deadline/retry values to milliseconds
@@ -64,8 +65,10 @@ case and port 443, and rejects paths, credentials, queries, fragments and URLs o
 2048 bytes. PHP accepts ASCII hosts (use punycode for international domain names).
 Changing this origin invalidates existing passes through the policy fingerprint.
 Supply the same `endpointUrl` to the browser initializer: it loads `/sdk/v1.js`
-from that origin and sets `data-endpoint` so SDK requests use it too. PHP performs
-local response verification; it does not send an HTTP request to this URL.
+from that origin and sets `data-endpoint` so SDK requests use it too. Guard performs
+local response verification; configuring this policy does not send an HTTP request.
+`VerdictClient` separately accepts a `baseUrl` using the same HTTPS-origin rules
+and sends a request only when `getVerdict(visitorId)` is called.
 
 Pass interval presets are 0/60/300/900/3600 seconds; default **300**. Interval 0
 means a fresh SDK check on every protected page load, with a 300-second grant for
@@ -112,6 +115,31 @@ The PDO schema is independent of Magento; its adapter retains the existing
 Magento tables rather than creating these tables beside them.
 
 ## Verification and HTTP boundaries
+
+`new VerdictClient(baseUrl, apiKey, transport = new CurlTransport())` provides an
+optional framework-independent server-side lookup. It posts the JSON object
+`{"visitorId":"..."}` to `{baseUrl}/api/v1/verdict` with the supplied `x-api-key`.
+API keys must be non-empty without whitespace/control characters; visitor IDs
+must be non-empty UTF-8 without control characters. Configuration/identity errors
+throw `GuardException` before transport invocation.
+
+`getVerdict()` returns the full successful 2xx JSON response as PHP arrays,
+including nested objects; it does not assume a response envelope or verdict
+schema. JSON integers outside PHP's integer range remain strings. HTTP failures
+(including redirects), transport failures and invalid/non-array JSON responses
+throw `ApiException`. Its nullable `statusCode` is set when a response was
+received. Exceptions exclude raw response bodies and API keys. This infrastructure
+exception is separate from `GuardException` so it does not commit intentional
+domain rejections inside a Guard transaction.
+
+The default `CurlTransport` requires `ext-curl` only when called, verifies TLS,
+allows HTTPS only, supports gzip/deflate responses, and never retries or follows
+redirects. Defaults are 10 seconds total and 3 seconds to connect; constructor
+arguments allow positive timeouts with connect timeout no greater than total.
+Implement `HttpTransport` to use a framework's HTTP client instead, preserving
+these transport guarantees and returning `HttpResponse(statusCode, body)` for
+all HTTP statuses. No platform HTTP client is required by the core. A lookup does
+not grant access or implement `VerdictVerifier`.
 
 The default `UnavailableVerifier` always rejects new reports. This lets an
 application inspect/enforce persisted blocks without installing a permissive
