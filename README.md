@@ -1,4 +1,4 @@
-# hachitech/antidetect-php
+# hachitechs/hideguard
 
 Framework independent access-control core for HideGuard, PHP **8.1+**. This local
 package is extracted from `Hachitech_AntidetectBrowser`.
@@ -30,9 +30,9 @@ this directory, pin its development version, and require the library:
     "repositories": [{
         "type": "path",
         "url": "/absolute/path/to/packages/antidetect-php",
-        "options": {"versions": {"hachitech/antidetect-php": "0.1.0"}}
+        "options": {"versions": {"hachitechs/hideguard": "0.1.0"}}
     }],
-    "require": {"hachitech/antidetect-php": "^0.1"}
+    "require": {"hachitechs/hideguard": "^0.1"}
 }
 ```
 
