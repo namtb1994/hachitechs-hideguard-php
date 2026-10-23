@@ -1,5 +1,5 @@
 {
-    "name": "hachitechs/hideguard",
+    "name": "hachitechs/hideguard-php",
     "description": "Framework independent HideGuard access protection for PHP",
     "type": "library",
     "license": "proprietary",
