@@ -2,6 +2,8 @@
 
 ## 0.1.0 — Unreleased
 
+- Change the PHP namespace to `Hachitechs\HideguardPhp` (breaking change).
+
 - Rename the Composer package to `hachitechs/hideguard-php`.
 - Add a framework-independent `VerdictClient` for `POST /api/v1/verdict`, with
   configurable HTTPS base URL/API key, visitor ID input, complete array responses,

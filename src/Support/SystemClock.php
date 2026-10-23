@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Support;
+namespace Hachitechs\HideguardPhp\Support;
 
 use Psr\Clock\ClockInterface;
 

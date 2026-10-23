@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect;
+namespace Hachitechs\HideguardPhp;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\AccessDecision;
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Access\RateWindow;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Contracts\AtomicMutationContract;
-use Hachitech\Antidetect\Contracts\GuardContract;
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Contracts\VerdictVerifier;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Verification\VerdictPolicy;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\AccessDecision;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Access\RateWindow;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
+use Hachitechs\HideguardPhp\Contracts\GuardContract;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Verification\VerdictPolicy;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 

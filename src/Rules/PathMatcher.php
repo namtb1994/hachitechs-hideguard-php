@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Rules;
+namespace Hachitechs\HideguardPhp\Rules;
 
 final class PathMatcher
 {

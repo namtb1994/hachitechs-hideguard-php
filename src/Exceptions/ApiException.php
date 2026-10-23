@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Exceptions;
+namespace Hachitechs\HideguardPhp\Exceptions;
 
 /** Infrastructure failure; deliberately separate from intentional Guard rejections. */
 final class ApiException extends \RuntimeException

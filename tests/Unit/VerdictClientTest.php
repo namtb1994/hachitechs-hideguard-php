@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Unit;
+namespace Hachitechs\HideguardPhp\Tests\Unit;
 
-use Hachitech\Antidetect\Contracts\HttpTransport;
-use Hachitech\Antidetect\Exceptions\ApiException;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Http\HttpResponse;
-use Hachitech\Antidetect\VerdictClient;
+use Hachitechs\HideguardPhp\Contracts\HttpTransport;
+use Hachitechs\HideguardPhp\Exceptions\ApiException;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Http\HttpResponse;
+use Hachitechs\HideguardPhp\VerdictClient;
 use PHPUnit\Framework\TestCase;
 
 final class VerdictClientTest extends TestCase

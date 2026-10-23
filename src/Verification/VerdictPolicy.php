@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Verification;
+namespace Hachitechs\HideguardPhp\Verification;
 
 /** Local verdict groups using the structure of HideGuard's shared/verdict-policy.json. */
 final class VerdictPolicy

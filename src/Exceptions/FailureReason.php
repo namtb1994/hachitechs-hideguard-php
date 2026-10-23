@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Exceptions;
+namespace Hachitechs\HideguardPhp\Exceptions;
 
 enum FailureReason: string
 {

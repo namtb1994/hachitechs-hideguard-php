@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Integration;
+namespace Hachitechs\HideguardPhp\Tests\Integration;
 
-use Hachitech\Antidetect\Tests\Support\GuardBehavior;
-use Hachitech\Antidetect\Tests\Support\UsesMySql;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Tests\Support\GuardBehavior;
+use Hachitechs\HideguardPhp\Tests\Support\UsesMySql;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
 
 final class MySqlGuardTest extends GuardBehavior
 {

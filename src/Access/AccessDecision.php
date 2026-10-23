@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Access;
+namespace Hachitechs\HideguardPhp\Access;
 
 /** Domain result uses Unix seconds; the browser serializer converts to milliseconds. */
 final class AccessDecision

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Support;
+namespace Hachitechs\HideguardPhp\Tests\Support;
 
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
 use PDO;
 
 /** Creates only randomly named test tables. Never points at an application's guard tables. */

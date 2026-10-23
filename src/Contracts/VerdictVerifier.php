@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Contracts;
+namespace Hachitechs\HideguardPhp\Contracts;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Verification\VerifiedVerdict;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Verification\VerifiedVerdict;
 
 interface VerdictVerifier
 {

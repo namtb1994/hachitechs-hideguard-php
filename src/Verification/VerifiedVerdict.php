@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Verification;
+namespace Hachitechs\HideguardPhp\Verification;
 
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
 
 /** Created only by the trusted verifier supplied by the application. */
 final class VerifiedVerdict

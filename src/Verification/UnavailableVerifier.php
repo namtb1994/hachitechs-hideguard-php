@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Verification;
+namespace Hachitechs\HideguardPhp\Verification;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Contracts\VerdictVerifier;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
 
 final class UnavailableVerifier implements VerdictVerifier
 {

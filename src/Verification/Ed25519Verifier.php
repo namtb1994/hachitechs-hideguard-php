@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Verification;
+namespace Hachitechs\HideguardPhp\Verification;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Contracts\VerdictVerifier;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Support\SystemClock;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Support\SystemClock;
 use Psr\Clock\ClockInterface;
 
 /** Verifies HideGuard collect responses using the site's Ed25519 SPKI public key. */

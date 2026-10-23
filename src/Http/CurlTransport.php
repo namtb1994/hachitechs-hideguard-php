@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Http;
+namespace Hachitechs\HideguardPhp\Http;
 
-use Hachitech\Antidetect\Contracts\HttpTransport;
-use Hachitech\Antidetect\Exceptions\ApiException;
+use Hachitechs\HideguardPhp\Contracts\HttpTransport;
+use Hachitechs\HideguardPhp\Exceptions\ApiException;
 
 final class CurlTransport implements HttpTransport
 {

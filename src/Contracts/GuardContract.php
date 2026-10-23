@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Contracts;
+namespace Hachitechs\HideguardPhp\Contracts;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\AccessDecision;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\AccessDecision;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 
 interface GuardContract
 {

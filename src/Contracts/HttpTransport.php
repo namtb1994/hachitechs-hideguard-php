@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Contracts;
+namespace Hachitechs\HideguardPhp\Contracts;
 
-use Hachitech\Antidetect\Exceptions\ApiException;
-use Hachitech\Antidetect\Http\HttpResponse;
+use Hachitechs\HideguardPhp\Exceptions\ApiException;
+use Hachitechs\HideguardPhp\Http\HttpResponse;
 
 interface HttpTransport
 {

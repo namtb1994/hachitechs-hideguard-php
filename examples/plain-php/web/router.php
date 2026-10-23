@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Rules\PathMatcher;
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
-use Hachitech\Antidetect\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Rules\PathMatcher;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
 
 // This example owns HTTP, sessions, CSRF and routing. None of these belong to core.
 if (PHP_SAPI !== 'cli-server') {

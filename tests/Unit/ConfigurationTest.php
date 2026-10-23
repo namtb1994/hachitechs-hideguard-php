@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Unit;
+namespace Hachitechs\HideguardPhp\Tests\Unit;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Configuration\RateLimits;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Rules\PathMatcher;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Configuration\RateLimits;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Rules\PathMatcher;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigurationTest extends TestCase
@@ -138,7 +138,7 @@ final class ConfigurationTest extends TestCase
     public function testCustomStorageMustSupplyAtomicMutationOnItsOwnConnection(): void
     {
         $this->expectException(GuardException::class);
-        $storage = $this->createMock(\Hachitech\Antidetect\Contracts\StorageContract::class);
+        $storage = $this->createMock(\Hachitechs\HideguardPhp\Contracts\StorageContract::class);
         Guard::factory()->withStorage($storage)->make();
     }
 
@@ -150,7 +150,7 @@ final class ConfigurationTest extends TestCase
         ]);
         $pdo->expects(self::never())->method('prepare');
         $this->expectException(\InvalidArgumentException::class);
-        new \Hachitech\Antidetect\Storage\PdoMySqlStorage($pdo);
+        new \Hachitechs\HideguardPhp\Storage\PdoMySqlStorage($pdo);
     }
 
     /** @dataProvider paths */

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Unit;
+namespace Hachitechs\HideguardPhp\Tests\Unit;
 
-use Hachitech\Antidetect\Verification\VerdictPolicy;
+use Hachitechs\HideguardPhp\Verification\VerdictPolicy;
 use PHPUnit\Framework\TestCase;
 
 final class VerdictPolicyTest extends TestCase

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Unit;
+namespace Hachitechs\HideguardPhp\Tests\Unit;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Tests\Support\FrozenClock;
-use Hachitech\Antidetect\Tests\Support\MemoryStorage;
-use Hachitech\Antidetect\Verification\Ed25519Verifier;
-use Hachitech\Antidetect\Verification\VerdictPolicy;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Tests\Support\FrozenClock;
+use Hachitechs\HideguardPhp\Tests\Support\MemoryStorage;
+use Hachitechs\HideguardPhp\Verification\Ed25519Verifier;
+use Hachitechs\HideguardPhp\Verification\VerdictPolicy;
 use PHPUnit\Framework\TestCase;
 
 final class Ed25519VerifierTest extends TestCase

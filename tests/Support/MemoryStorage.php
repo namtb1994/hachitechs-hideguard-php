@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Support;
+namespace Hachitechs\HideguardPhp\Tests\Support;
 
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Access\RateWindow;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Contracts\AtomicMutationContract;
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Access\RateWindow;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
 
 /** Test fixture only. This implementation cannot protect concurrent application processes. */
 final class MemoryStorage implements StorageContract, AtomicMutationContract

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Integration;
+namespace Hachitechs\HideguardPhp\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
 
@@ -98,10 +98,10 @@ final class VerdictHttpTest extends TestCase
         $code = <<<'PHP'
 require 'vendor/autoload.php';
 try {
-    $transport = new \Hachitech\Antidetect\Http\CurlTransport(1, 1);
-    $client = new \Hachitech\Antidetect\VerdictClient($argv[1], 'test-api-key', $transport);
+    $transport = new \Hachitechs\HideguardPhp\Http\CurlTransport(1, 1);
+    $client = new \Hachitechs\HideguardPhp\VerdictClient($argv[1], 'test-api-key', $transport);
     echo json_encode(['response' => $client->getVerdict('test-visitor')], JSON_THROW_ON_ERROR);
-} catch (\Hachitech\Antidetect\Exceptions\ApiException $error) {
+} catch (\Hachitechs\HideguardPhp\Exceptions\ApiException $error) {
     echo json_encode(['error' => $error->getMessage(), 'status' => $error->statusCode], JSON_THROW_ON_ERROR);
 }
 PHP;

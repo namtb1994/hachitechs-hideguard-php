@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Guard;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Guard;
 
 $app = require __DIR__ . '/bootstrap.php';
 /** @var Guard $guard */

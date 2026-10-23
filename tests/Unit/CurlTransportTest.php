@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Unit;
+namespace Hachitechs\HideguardPhp\Tests\Unit;
 
-use Hachitech\Antidetect\Exceptions\ApiException;
-use Hachitech\Antidetect\Http\CurlTransport;
+use Hachitechs\HideguardPhp\Exceptions\ApiException;
+use Hachitechs\HideguardPhp\Http\CurlTransport;
 use PHPUnit\Framework\TestCase;
 
 final class CurlTransportTest extends TestCase

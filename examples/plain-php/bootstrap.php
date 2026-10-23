@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
-use Hachitech\Antidetect\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 

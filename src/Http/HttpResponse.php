@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Http;
+namespace Hachitechs\HideguardPhp\Http;
 
 final class HttpResponse
 {

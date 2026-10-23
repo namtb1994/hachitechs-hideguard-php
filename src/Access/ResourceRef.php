@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Access;
+namespace Hachitechs\HideguardPhp\Access;
 
 /** Resource ownership is supplied by the server; null identifies a guest resource. */
 final class ResourceRef

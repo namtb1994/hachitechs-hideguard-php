@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Support;
+namespace Hachitechs\HideguardPhp\Tests\Support;
 
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
 
 trait UsesMySql
 {

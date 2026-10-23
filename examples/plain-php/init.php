@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
 
 $app = require __DIR__ . '/bootstrap.php';
 /** @var PdoMySqlStorage $storage */

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Configuration;
+namespace Hachitechs\HideguardPhp\Configuration;
 
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Support\EndpointUrl;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Support\EndpointUrl;
 
 final class ProtectionPolicy
 {

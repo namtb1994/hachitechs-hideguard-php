@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect;
+namespace Hachitechs\HideguardPhp;
 
-use Hachitech\Antidetect\Contracts\HttpTransport;
-use Hachitech\Antidetect\Exceptions\ApiException;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Http\CurlTransport;
-use Hachitech\Antidetect\Support\EndpointUrl;
+use Hachitechs\HideguardPhp\Contracts\HttpTransport;
+use Hachitechs\HideguardPhp\Exceptions\ApiException;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Http\CurlTransport;
+use Hachitechs\HideguardPhp\Support\EndpointUrl;
 
 final class VerdictClient
 {

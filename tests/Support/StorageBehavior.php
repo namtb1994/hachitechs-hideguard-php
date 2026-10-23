@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Support;
+namespace Hachitechs\HideguardPhp\Tests\Support;
 
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Access\RateWindow;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Contracts\AtomicMutationContract;
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Access\RateWindow;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use PHPUnit\Framework\TestCase;
 
 abstract class StorageBehavior extends TestCase

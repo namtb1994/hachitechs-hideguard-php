@@ -20,12 +20,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Hachitech\\Antidetect\\": "src/"
+            "Hachitechs\\HideguardPhp\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Hachitech\\Antidetect\\Tests\\": "tests/"
+            "Hachitechs\\HideguardPhp\\Tests\\": "tests/"
         }
     },
     "archive": {

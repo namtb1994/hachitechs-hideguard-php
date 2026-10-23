@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Access;
+namespace Hachitechs\HideguardPhp\Access;
 
 /** Storage record. Adapters must return detached instances and persist changes explicitly. */
 final class BrowserState

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Integration;
+namespace Hachitechs\HideguardPhp\Tests\Integration;
 
-use Hachitech\Antidetect\Tests\Support\UsesMySql;
+use Hachitechs\HideguardPhp\Tests\Support\UsesMySql;
 use PHPUnit\Framework\TestCase;
 
 final class WebExampleTest extends TestCase

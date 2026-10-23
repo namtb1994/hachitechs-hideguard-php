@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Access;
+namespace Hachitechs\HideguardPhp\Access;
 
 final class RateWindow
 {

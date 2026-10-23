@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Contract;
+namespace Hachitechs\HideguardPhp\Tests\Contract;
 
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Tests\Support\MemoryStorage;
-use Hachitech\Antidetect\Tests\Support\StorageBehavior;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Tests\Support\MemoryStorage;
+use Hachitechs\HideguardPhp\Tests\Support\StorageBehavior;
 
 final class MemoryStorageTest extends StorageBehavior
 {

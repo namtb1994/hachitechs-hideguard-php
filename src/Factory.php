@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect;
+namespace Hachitechs\HideguardPhp;
 
-use Hachitech\Antidetect\Contracts\AtomicMutationContract;
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Contracts\VerdictVerifier;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Support\SystemClock;
-use Hachitech\Antidetect\Verification\UnavailableVerifier;
+use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Support\SystemClock;
+use Hachitechs\HideguardPhp\Verification\UnavailableVerifier;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

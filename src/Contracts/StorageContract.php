@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Contracts;
+namespace Hachitechs\HideguardPhp\Contracts;
 
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Access\RateWindow;
-use Hachitech\Antidetect\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Access\RateWindow;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
 
 /** Writes occur inside AtomicMutationContract::run on the same connection. */
 interface StorageContract

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
-use Hachitech\Antidetect\Tests\Support\FrozenClock;
-use Hachitech\Antidetect\Tests\Support\MySqlFixture;
-use Hachitech\Antidetect\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Tests\Support\FrozenClock;
+use Hachitechs\HideguardPhp\Tests\Support\MySqlFixture;
+use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 

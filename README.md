@@ -39,14 +39,21 @@ this directory, pin its development version, and require the library:
 Use the eventual registry/repository release instead of this path configuration
 when distributing adapters. Installation does not initialize tables or assets.
 
+## PHP namespace
+
+All package classes use the `Hachitechs\HideguardPhp` namespace. When upgrading,
+update application imports and fully qualified class names from
+`Hachitech\Antidetect` to `Hachitechs\HideguardPhp`, then regenerate the Composer
+autoloader with `composer dump-autoload`.
+
 ## Call the verdict API from any PHP application
 
 `VerdictClient` needs only the base URL, server-side API key and visitor ID. It
 does not require Guard, database storage, a session or a framework bootstrap.
 
 ```php
-use Hachitech\Antidetect\Exceptions\ApiException;
-use Hachitech\Antidetect\VerdictClient;
+use Hachitechs\HideguardPhp\Exceptions\ApiException;
+use Hachitechs\HideguardPhp\VerdictClient;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -80,7 +87,7 @@ transport verifies TLS, supports gzip/deflate, does not follow redirects or retr
 and uses a 3-second connect timeout and 10-second total timeout. To change them:
 
 ```php
-$client = new VerdictClient($baseUrl, $apiKey, new \Hachitech\Antidetect\Http\CurlTransport(
+$client = new VerdictClient($baseUrl, $apiKey, new \Hachitechs\HideguardPhp\Http\CurlTransport(
     timeoutSeconds: 15,
     connectTimeoutSeconds: 5
 ));
@@ -97,7 +104,7 @@ constructor and method in the plugin's PHP code. Both platforms can use the
 default cURL transport directly.
 
 If a platform must use its own HTTP client, implement
-`Hachitech\Antidetect\Contracts\HttpTransport::post()` and pass it as the third
+`Hachitechs\HideguardPhp\Contracts\HttpTransport::post()` and pass it as the third
 constructor argument. It receives the URL, header map and JSON string, and returns
 `Http\HttpResponse($statusCode, $body)`. Enforce TLS verification, finite timeouts,
 no redirects and no automatic retries; translate transport failures to
@@ -110,12 +117,12 @@ signature verification; the application chooses how to use the returned data.
 ## Use from plain PHP
 
 ```php
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
-use Hachitech\Antidetect\Verification\Ed25519Verifier;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Verification\Ed25519Verifier;
 
 require __DIR__ . '/vendor/autoload.php';
 

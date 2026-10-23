@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Support;
+namespace Hachitechs\HideguardPhp\Tests\Support;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\AccessDecision;
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Access\ResourceRef;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Configuration\RateLimits;
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Contracts\VerdictVerifier;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Verification\DevelopmentVerifier;
-use Hachitech\Antidetect\Verification\VerifiedVerdict;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\AccessDecision;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Configuration\RateLimits;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Verification\VerifiedVerdict;
 use PHPUnit\Framework\TestCase;
 
 /** Run the same access behavior against each storage implementation. */

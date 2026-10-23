@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Unit;
+namespace Hachitechs\HideguardPhp\Tests\Unit;
 
-use Hachitech\Antidetect\Contracts\StorageContract;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Tests\Support\GuardBehavior;
-use Hachitech\Antidetect\Tests\Support\MemoryStorage;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Tests\Support\GuardBehavior;
+use Hachitechs\HideguardPhp\Tests\Support\MemoryStorage;
 
 final class GuardTest extends GuardBehavior
 {

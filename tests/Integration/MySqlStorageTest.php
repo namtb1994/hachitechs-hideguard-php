@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Hachitech\Antidetect\Tests\Integration;
+namespace Hachitechs\HideguardPhp\Tests\Integration;
 
-use Hachitech\Antidetect\Access\AccessContext;
-use Hachitech\Antidetect\Access\BrowserState;
-use Hachitech\Antidetect\Exceptions\FailureReason;
-use Hachitech\Antidetect\Exceptions\GuardException;
-use Hachitech\Antidetect\Storage\PdoMySqlStorage;
-use Hachitech\Antidetect\Tests\Support\MySqlFixture;
-use Hachitech\Antidetect\Tests\Support\StorageBehavior;
-use Hachitech\Antidetect\Tests\Support\UsesMySql;
-use Hachitech\Antidetect\Configuration\ProtectionPolicy;
-use Hachitech\Antidetect\Guard;
-use Hachitech\Antidetect\Tests\Support\FrozenClock;
+use Hachitechs\HideguardPhp\Access\AccessContext;
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Exceptions\FailureReason;
+use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
+use Hachitechs\HideguardPhp\Tests\Support\MySqlFixture;
+use Hachitechs\HideguardPhp\Tests\Support\StorageBehavior;
+use Hachitechs\HideguardPhp\Tests\Support\UsesMySql;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Hachitechs\HideguardPhp\Guard;
+use Hachitechs\HideguardPhp\Tests\Support\FrozenClock;
 
 final class MySqlStorageTest extends StorageBehavior
 {
