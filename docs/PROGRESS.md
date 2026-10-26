@@ -254,3 +254,17 @@ pending HTML is opaque before JS initializes. Tester PASS, reviewer APPROVED.
   canonical signature verification is unchanged. Full proof session/resource
   binding still requires an upstream signed field; no full replay-prevention
   claim is made.
+
+### PHP 8.1 CI compatibility — 2026-10-26
+
+The direct `CURLOPT_XFERINFOFUNCTION` reference caused both an undefined constant
+at runtime and the reported PHPStan failure on PHP 8.1. The option was added in
+PHP 8.2. CurlTransport now detects it and uses `CURLOPT_PROGRESSFUNCTION` on PHP
+8.1, preserving the same download/decompression limits and timeout behavior.
+
+Observed with read-only snapshots and local HTTPS fixtures: 12 transport tests /
+49 assertions passed on each of PHP 8.1.34 and PHP 8.2. PHPStan 1.12 level 8 passed
+on actual PHP 8.1 (test CLI memory limit 512 MiB), and PSR-12 passed. Tester PASS;
+reviewer APPROVED against the manifest PHP 8.1+ requirement and CI version matrix.
+No PHPStan dependency upgrade or error suppression was needed. GitHub Actions
+has not been rerun and the change has not been pushed.

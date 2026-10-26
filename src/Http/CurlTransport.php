@@ -42,6 +42,8 @@ final class CurlTransport implements HttpTransport
             }
             $response = '';
             $oversized = false;
+            // XFERINFOFUNCTION is available from PHP 8.2; keep the PHP 8.1 progress callback supported.
+            $progressOption = defined('CURLOPT_XFERINFOFUNCTION') ? CURLOPT_XFERINFOFUNCTION : CURLOPT_PROGRESSFUNCTION;
             $configured = curl_setopt_array($handle, [
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $body,
@@ -56,7 +58,7 @@ final class CurlTransport implements HttpTransport
                     return $length;
                 },
                 CURLOPT_NOPROGRESS => false,
-                CURLOPT_XFERINFOFUNCTION => function ($curl, float $total, float $downloaded) use (&$oversized): int {
+                $progressOption => function ($curl, float $total, float $downloaded) use (&$oversized): int {
                     if ($downloaded > $this->maxResponseBytes || $total > $this->maxResponseBytes) {
                         $oversized = true;
                         return 1;
