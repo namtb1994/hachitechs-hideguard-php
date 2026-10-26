@@ -16,12 +16,15 @@ interface StorageContract
     public function sessionCount(string $scopeId): int;
     public function blockExpiry(string $scopeId, ?string $visitorId, ?string $actorId): int;
     public function block(string $scopeId, string $visitorId, ?string $actorId, int $until): void;
+    /** Revoke matching grants/bindings and cancel verification attempts, retaining blocks. */
     public function revokeIdentity(string $scopeId, ?string $visitorId, ?string $actorId): void;
 
     /** Bind one resource per browser, transferring that resource from any previous browser. */
     public function bindResource(string $scopeId, string $browserId, ResourceRef $resource): void;
     public function resource(string $scopeId, ResourceRef $resource): ?BrowserState;
+    /** Revoke the resource grant and cancel its browser's verification attempt. */
     public function revokeResource(string $scopeId, ResourceRef $resource): void;
+    /** Revoke all grants/bindings and cancel all verification attempts in this scope, retaining blocks. */
     public function revokeScope(string $scopeId): void;
 
     /** Clear blocks, retaining fields unrelated to blocking; return persisted block row count. */

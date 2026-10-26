@@ -70,7 +70,7 @@ final class Guard implements GuardContract
                 || ($decision->status === 'verification_failed' && !$retry)
             );
             if (!$reuse && $state !== null) {
-                $state->revoke();
+                $state->revoke(cancelVerification: false);
                 $state->verificationUntil = $now;
             }
             try {
@@ -153,16 +153,16 @@ final class Guard implements GuardContract
                     $verdictGroup = VerdictPolicy::groupFor($verdict->verdict);
                     if (
                         $policy->environment !== 'development'
-                        && (!$verdict->verified || $verdictGroup === 'challenge')
+                        && !$verdict->verified
                     ) {
                         throw new GuardException(
                             FailureReason::InvalidVerdict,
-                            'A verified final verdict is required.'
+                            'A verified verdict is required.'
                         );
                     }
                 } catch (GuardException $error) {
                     $this->storage->revokeIdentity($context->scopeId, $state->visitorId, $context->actorId);
-                    $state->revoke();
+                    $state->revoke(cancelVerification: false);
                     $state->verificationUntil = $now;
                     $this->storage->saveSession($context->scopeId, $state);
                     throw $error;
@@ -242,7 +242,7 @@ final class Guard implements GuardContract
                 return $current;
             }
             $state = $this->prepare($context, $policy, $state, $now);
-            $state->revoke();
+            $state->revoke(cancelVerification: false);
             $state->verificationUntil = $now;
             $this->storage->saveSession($context->scopeId, $state);
             return AccessDecision::failed($state->verificationId);

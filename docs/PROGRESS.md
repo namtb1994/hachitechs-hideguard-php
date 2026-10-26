@@ -221,3 +221,36 @@ in BROWSER; adapters and prebuilt artifacts are synchronized. Observed: 52 brows
 tests, Magento native integration and Laravel 10/93 with MySQL pass; template lint,
 build/publication and native served-asset checks pass. Visual QA confirms native
 pending HTML is opaque before JS initializes. Tester PASS, reviewer APPROVED.
+
+### Conformance hardening — 2026-10-26
+
+- Guard accepts authenticated Challenge under D-03; unverified staging/production
+  verdicts remain rejected. Revoking an identity, scope or resource also cancels
+  its verification attempt; failed attempts still require an explicit retry.
+- Default transport/client response limits are 64 KiB, including gzip expansion
+  and custom-transport parsing. Added a shared private schema/expected-visitor
+  checker using the same token/score/reason limits as the Node package.
+- Magento delegates private checking to the core and cancels attempts in its
+  existing storage adapter. No schema migration. Per owner clarification, HideGuard
+  validates the registered domain/public key and backend secret; no separate
+  expected-site configuration is required. Collect signature, environment and
+  freshness checks remain intact. Policy fingerprint v4 invalidates old attempts
+  and grants when adopting the updated revocation semantics.
+- Observed on PHP 8.2.35/PHPUnit 9.6.36 in isolated container snapshots: baseline
+  270 tests/1080 assertions; final package 304 tests/1205 assertions, including
+  random-table MySQL fixtures, verified local HTTPS/gzip and the plain PHP web
+  example; Magento unit 184 tests/444 assertions. No skipped tests in these final
+  runs. PHPStan level 8 with PHP 8.1 target, PSR-12, changed Magento runtime coding
+  standard, and native DI/admin XML schema validation passed.
+- Tester PASS; reviewer APPROVED after checking PHP 8.1/PSR-4/PSR clock/error and
+  storage contracts, Magento 2.4.7-p10 DI/config patterns, security and code quality.
+  Actual PHP 8.1 runtime, live HideGuard/API/checkout and deployment were not tested.
+  Application vendor/config/database records were not updated. Matching package
+  and module sources must be installed together; custom storage implementations
+  must adopt the updated cancellation contract.
+- Final checks after removing the expected-site option: package and Magento
+  PHPUnit suites, PHPStan level 8/PHP 8.1 target, PSR-12 and native XML schemas
+  passed. Review APPROVED against the owner-confirmed domain/key contract;
+  canonical signature verification is unchanged. Full proof session/resource
+  binding still requires an upstream signed field; no full replay-prevention
+  claim is made.

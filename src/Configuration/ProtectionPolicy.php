@@ -84,7 +84,7 @@ final class ProtectionPolicy
         $settings = get_object_vars($this);
         sort($settings['accessPoints']);
         sort($settings['pageRules']);
-        return hash('sha256', 'hideguard-policy-v3:' . json_encode($settings, JSON_THROW_ON_ERROR));
+        return hash('sha256', 'hideguard-policy-v4:' . json_encode($settings, JSON_THROW_ON_ERROR));
     }
 
     public function grants(BrowserState $state, ?string $actorId, int $now): bool

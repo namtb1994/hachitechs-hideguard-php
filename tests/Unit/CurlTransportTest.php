@@ -31,4 +31,10 @@ final class CurlTransportTest extends TestCase
         $this->expectExceptionMessage('cURL error 1');
         (new CurlTransport())->post('http://127.0.0.1:1/api/v1/verdict', [], '{}');
     }
+
+    public function testResponseLimitMustBePositive(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new CurlTransport(maxResponseBytes: 0);
+    }
 }

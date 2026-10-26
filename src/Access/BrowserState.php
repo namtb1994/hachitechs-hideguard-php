@@ -22,9 +22,13 @@ final class BrowserState
     ) {
     }
 
-    public function revoke(): void
+    public function revoke(bool $cancelVerification = true): void
     {
         $this->grantedUntil = 0;
         $this->resource = null;
+        if ($cancelVerification) {
+            $this->verificationId = null;
+            $this->verificationUntil = 0;
+        }
     }
 }

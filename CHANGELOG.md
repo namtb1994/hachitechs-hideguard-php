@@ -2,6 +2,11 @@
 
 ## 0.1.0 — Unreleased
 
+- Accept authenticated Challenge results consistently with current HideGuard policy.
+- Cancel pending verification attempts when revoking grants, identities or scopes.
+- Limit downloaded and decompressed private API responses to 64 KiB by default.
+- Add a shared private response checker with expected visitor and reason validation.
+
 - Change the PHP namespace to `Hachitechs\HideguardPhp` (breaking change).
 
 - Rename the Composer package to `hachitechs/hideguard-php`.

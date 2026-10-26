@@ -132,6 +132,20 @@ received. Exceptions exclude raw response bodies and API keys. This infrastructu
 exception is separate from `GuardException` so it does not commit intentional
 domain rejections inside a Guard transaction.
 
+The client and default cURL transport each limit responses to 65536 bytes by
+default. The transport bounds downloaded bytes and decompressed chunks before
+buffering them; the client checks the body size before JSON decoding, including
+custom transport responses. Both accept a positive `maxResponseBytes` constructor
+argument. Custom transports must bound their own receive/decompression buffers.
+The JSON depth limit remains 512.
+
+`Verification\PrivateVerdictChecker::check($payload, $expectedVisitorId)` checks
+responses just received from the authenticated private client. It enforces the
+expected server-selected visitor, known verdict group, safe nonnegative integer
+score, and at most 64 reason objects with protocol-token codes. It returns a
+`VerifiedVerdict` dated by the injected PSR clock. It does not verify a signature
+and must never accept browser-supplied proof as authenticated API output.
+
 The default `CurlTransport` requires `ext-curl` only when called, verifies TLS,
 allows HTTPS only, supports gzip/deflate responses, and never retries or follows
 redirects. Defaults are 10 seconds total and 3 seconds to connect; constructor
@@ -180,15 +194,18 @@ Score is 0–9007199254740991, and at most 64 reason codes are accepted. The
 header plus canonical message is limited to 12288 bytes. The PEM must contain
 an Ed25519 SPKI key (44 DER bytes with the standard 12-byte prefix).
 
-The configured public key is assumed to belong to exactly one HideGuard site,
-as in the Shopify implementation; site ID is signed, but this version has no
-separate configured site-ID allowlist. Environment must match the active policy.
+HideGuard validates the registered domain and SDK public key, plus the secret
+API key for private backend requests (owner-confirmed on 2026-10-26). No separate
+site-ID configuration is required by this integration contract. Collect response
+verification uses the trusted signature public key, active environment and
+freshness policy. `siteId` remains authenticated in the canonical signed message.
 `VerdictPolicy::BLOCK_VERDICTS`, `CHALLENGE_VERDICTS` and `ALLOW_VERDICTS`
 define the three groups; `groupFor()` uses strict membership. Validation and
 Guard decisions share these groups. The local groups are deliberately configurable through these constants.
 The Ed25519 verifier normalizes a signed verdict outside the block group to Allow;
-a raw unresolved Challenge returned by a custom verifier is rejected outside
-development. The signature contract matches Shopify. A valid signature authenticates a verdict before these groups determine
+Guard also accepts authenticated Challenge results under current policy D-03.
+Unverified results remain rejected outside development. This does not mean a
+challenge has been solved. The signature contract matches Shopify. A valid signature authenticates a verdict before these groups determine
 access; it does not override a block rule or implement a CAPTCHA.
 
 Fresh reports allow at most 30 seconds of future clock skew and must be younger
@@ -198,7 +215,7 @@ so signature expiry cannot shorten its persisted deadline. A new block deadline
 starts at the signed timestamp, capped at server time; a pass deadline is capped
 at signed timestamp plus grant lifetime. Repeated accepted responses do not
 slide the same grant or ban. Expired signatures cannot restart their original
-period. Policy fingerprint v2 invalidates passes created before this rollout
+period. Policy fingerprint v4 invalidates passes created before this rollout
 while retaining existing block deadlines; no schema migration is required.
 
 Request ID is authenticated but not consumed in a replay store. The signed
@@ -223,6 +240,13 @@ Adapters must implement cache bypass/integration and protect backend actions,
 in addition to browser interaction locking.
 
 ## Server verification attempts
+
+`BrowserState::revoke()` and storage `revokeIdentity`, `revokeResource`, and
+`revokeScope` cancel verification IDs and deadlines as well as grants/bindings.
+Late reports cannot complete a revoked attempt; a new preflight creates a new ID.
+Blocks remain intact. Internal attempt failures use `revoke(cancelVerification:
+false)` to retain the failed ID and require an explicit retry. Custom storage
+adapters must implement the updated revocation semantics; no new columns are needed.
 
 The lifecycle is described in the README's Verification lifecycle section.
 `preflight` accepts an optional `bool $retry = false`; `report` now requires the

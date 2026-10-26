@@ -84,7 +84,10 @@ Successful 2xx JSON objects/lists become PHP arrays. Invalid JSON, scalar/empty
 responses, HTTP errors, redirects and network failures throw `ApiException`.
 Large JSON integers outside PHP's integer range remain strings. The default
 transport verifies TLS, supports gzip/deflate, does not follow redirects or retry,
-and uses a 3-second connect timeout and 10-second total timeout. To change them:
+and uses a 3-second connect timeout and 10-second total timeout. Downloaded and
+decompressed bodies are limited to 64 KiB; the client checks this limit before
+JSON parsing even with a custom transport. Both constructors accept a positive
+`maxResponseBytes` argument. To change the timeouts:
 
 ```php
 $client = new VerdictClient($baseUrl, $apiKey, new \Hachitechs\HideguardPhp\Http\CurlTransport(
@@ -113,6 +116,17 @@ No Magento/WordPress HTTP dependency is added to the package.
 
 This method fetches a verdict only. It does not change Guard grants, blocks or
 signature verification; the application chooses how to use the returned data.
+
+For a response just received from this private client, use
+`Verification\PrivateVerdictChecker::check($response, $expectedVisitorId)` to
+validate its schema and match the visitor selected by trusted server state.
+It accepts `allow`, `challenge` and `block`, validates scores/reason codes, and
+returns `VerifiedVerdict` using a PSR clock. It is not a signature verifier and
+must never be used to trust payloads supplied by a browser.
+
+HideGuard validates the registered domain and SDK public key, plus the secret
+API key for private backend requests. Signed collect responses are checked with
+the trusted signature public key, environment and freshness policy.
 
 ## Use from plain PHP
 

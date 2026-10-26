@@ -308,7 +308,8 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
     {
         $this->execute(
             'UPDATE ' . $this->table('session')
-            . ' SET granted_until = 0, resource_type = NULL, resource_id = NULL WHERE '
+            . ' SET granted_until = 0, resource_type = NULL, resource_id = NULL, '
+            . 'verification_id = NULL, verification_until = 0 WHERE '
             . $condition,
             $params
         );

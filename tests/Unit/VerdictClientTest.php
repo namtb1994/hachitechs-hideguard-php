@@ -150,4 +150,31 @@ final class VerdictClientTest extends TestCase
             self::assertNull($error->statusCode);
         }
     }
+
+    public function testResponseLimitAlsoAppliesToCustomTransportsBeforeJsonParsing(): void
+    {
+        $transport = $this->createMock(HttpTransport::class);
+        $transport->expects(self::once())->method('post')->willReturn(new HttpResponse(200, str_repeat('x', 65)));
+        $this->expectException(ApiException::class);
+        $this->expectExceptionMessage('exceeds the size limit');
+        (new VerdictClient('https://example.com', 'key', $transport, 64))->getVerdict('visitor');
+    }
+
+    public function testJsonResponseAtTheByteLimitIsAccepted(): void
+    {
+        $transport = $this->createMock(HttpTransport::class);
+        $transport->method('post')->willReturn(new HttpResponse(200, '{"value":"ok"}'));
+        self::assertSame(['value' => 'ok'], (new VerdictClient(
+            'https://example.com',
+            'key',
+            $transport,
+            strlen('{"value":"ok"}')
+        ))->getVerdict('visitor'));
+    }
+
+    public function testResponseLimitMustBePositive(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new VerdictClient('https://example.com', 'key', maxResponseBytes: 0);
+    }
 }

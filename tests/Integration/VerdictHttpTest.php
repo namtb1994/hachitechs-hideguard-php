@@ -81,6 +81,19 @@ final class VerdictHttpTest extends TestCase
         self::assertSame('HideGuard HTTP request failed (cURL error 28).', $result['error']);
     }
 
+    /** @dataProvider oversizedResponses */
+    public function testNativeCurlRejectsOversizedBodiesIncludingGzipExpansion(string $mode): void
+    {
+        $result = $this->request($mode);
+        self::assertSame('HideGuard verdict response exceeds the size limit.', $result['error']);
+        self::assertNull($result['status']);
+    }
+
+    public static function oversizedResponses(): array
+    {
+        return [['oversized-gzip'], ['oversized-plain']];
+    }
+
     private function request(string $mode, bool $trustCertificate = true): array
     {
         $pem = $this->directory . '/server.pem';

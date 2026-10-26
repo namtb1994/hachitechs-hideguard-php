@@ -10,6 +10,7 @@ use Hachitechs\HideguardPhp\Access\BrowserState;
 use Hachitechs\HideguardPhp\Access\ResourceRef;
 use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Configuration\RateLimits;
+use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
 use Hachitechs\HideguardPhp\Contracts\StorageContract;
 use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
@@ -203,7 +204,7 @@ abstract class GuardBehavior extends TestCase
         self::assertSame('verification_required', $this->guard->inspect($this->context, $production)->status);
     }
 
-    public function testTrustedVerifierRejectsUnresolvedChallengeAndUnsignedProductionVerdicts(): void
+    public function testTrustedVerifierAllowsChallengeButRejectsUnsignedProductionVerdicts(): void
     {
         // A trusted deterministic fixture, not an implementation of HideGuard signing.
         $verifier = new class implements VerdictVerifier {
@@ -224,18 +225,54 @@ abstract class GuardBehavior extends TestCase
         self::assertSame('verified', $this->report($guard, $this->context, $policy, $this->payload())->verification);
         self::assertSame('allowed', $guard->inspect($this->context, $policy)->status);
         $challengeContext = new AccessContext('site', 'challenge-browser');
-        $this->assertFailure(FailureReason::InvalidVerdict, fn() => $this->report(
+        self::assertSame('allowed', $this->report(
             $guard,
             $challengeContext,
             $policy,
             $this->payload('challenge', 'challenge-visitor')
-        ));
+        )->status);
         $verifier->verified = false;
         $this->assertFailure(
             FailureReason::InvalidVerdict,
             fn() => $this->report($guard, $this->context, $policy, $this->payload())
         );
         self::assertSame('verification_failed', $guard->inspect($this->context, $policy)->status);
+    }
+
+    public function testRevokedScopeAndIdentityAttemptsCannotBeCompletedByLateReports(): void
+    {
+        self::assertInstanceOf(AtomicMutationContract::class, $this->storage);
+        $context = new AccessContext('site', 'browser', 'actor');
+        foreach (['scope', 'identity'] as $kind) {
+            $attempt = $this->guard->preflight($context, $this->policy);
+            if ($kind === 'scope') {
+                $this->guard->revokeScope('site');
+            } else {
+                $this->storage->run('site', fn() => $this->storage->revokeIdentity('site', null, 'actor'));
+            }
+            self::assertNull($this->storage->session('site', 'browser')->verificationId);
+            $this->assertFailure(FailureReason::InvalidVerdict, fn() => $this->guard->report(
+                $context,
+                $this->policy,
+                $this->payload(),
+                $attempt->verificationId
+            ));
+            $next = $this->guard->preflight($context, $this->policy);
+            self::assertNotSame($attempt->verificationId, $next->verificationId);
+            self::assertSame('verification_required', $this->guard->report(
+                $context,
+                $this->policy,
+                $this->payload(),
+                $attempt->verificationId
+            )->status);
+            self::assertSame('allowed', $this->guard->report(
+                $context,
+                $this->policy,
+                $this->payload(),
+                $next->verificationId
+            )->status);
+            $this->guard->revokeScope('site');
+        }
     }
 
     public function testResourceBindingChecksOwnerTypeScopeAndCurrentGrant(): void

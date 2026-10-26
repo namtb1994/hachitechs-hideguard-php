@@ -128,4 +128,42 @@ abstract class StorageBehavior extends TestCase
         }
         self::assertNull($this->storage->session('scope', 'partial'));
     }
+
+    /** @dataProvider revocations */
+    public function testRevocationCancelsAttemptsAndRetainsBlocksAndOtherScopes(string $kind): void
+    {
+        $resource = new ResourceRef('custom', 'resource', 'actor');
+        $this->atomic->run('scope', function () use ($resource, $kind): void {
+            $state = new BrowserState(
+                'browser',
+                actorId: 'actor',
+                visitorId: 'visitor',
+                blockedUntil: 2000,
+                grantedUntil: 1500,
+                resource: $resource,
+                verificationId: str_repeat('a', 32),
+                verificationUntil: 1035
+            );
+            $this->storage->saveSession('scope', $state);
+            $this->storage->saveSession('other', $state);
+            match ($kind) {
+                'scope' => $this->storage->revokeScope('scope'),
+                'actor' => $this->storage->revokeIdentity('scope', null, 'actor'),
+                'visitor' => $this->storage->revokeIdentity('scope', 'visitor', null),
+                'resource' => $this->storage->revokeResource('scope', $resource),
+            };
+        });
+        $state = $this->storage->session('scope', 'browser');
+        self::assertSame(0, $state->grantedUntil);
+        self::assertNull($state->resource);
+        self::assertNull($state->verificationId);
+        self::assertSame(0, $state->verificationUntil);
+        self::assertSame(2000, $state->blockedUntil);
+        self::assertSame(str_repeat('a', 32), $this->storage->session('other', 'browser')->verificationId);
+    }
+
+    public static function revocations(): array
+    {
+        return [['scope'], ['actor'], ['visitor'], ['resource']];
+    }
 }

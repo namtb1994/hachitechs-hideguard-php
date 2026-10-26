@@ -40,8 +40,15 @@ if ($mode === 'timeout') {
 }
 $status = $mode === 'redirect' ? '302 Found' : '200 OK';
 $payload = gzencode('{"verdict":"allow","reasons":[{"code":"https-fixture"}]}');
+if ($mode === 'oversized-gzip') {
+    $payload = gzencode(json_encode(['padding' => str_repeat('x', 65536)], JSON_THROW_ON_ERROR));
+}
+if ($mode === 'oversized-plain') {
+    $payload = json_encode(['padding' => str_repeat('x', 65536)], JSON_THROW_ON_ERROR);
+}
 fwrite($connection, 'HTTP/1.1 ' . $status . "\r\n"
-    . "Content-Type: application/json\r\nContent-Encoding: gzip\r\n"
+    . "Content-Type: application/json\r\n"
+    . ($mode === 'oversized-plain' ? '' : "Content-Encoding: gzip\r\n")
     . 'Location: https://' . stream_socket_get_name($server, false) . "/unexpected\r\n"
     . 'Content-Length: ' . strlen($payload) . "\r\nConnection: close\r\n\r\n" . $payload);
 fclose($connection);

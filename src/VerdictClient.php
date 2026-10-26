@@ -18,9 +18,13 @@ final class VerdictClient
     public function __construct(
         string $baseUrl,
         private readonly string $apiKey,
-        private readonly HttpTransport $transport = new CurlTransport()
+        private readonly HttpTransport $transport = new CurlTransport(),
+        private readonly int $maxResponseBytes = CurlTransport::DEFAULT_MAX_RESPONSE_BYTES
     ) {
         $this->url = EndpointUrl::normalize($baseUrl) . '/api/v1/verdict';
+        if ($maxResponseBytes < 1) {
+            throw new \InvalidArgumentException('Response size limit must be positive.');
+        }
         if ($apiKey === '' || preg_match('/[\x00-\x20\x7f]/', $apiKey)) {
             throw new GuardException(
                 FailureReason::InvalidConfiguration,
@@ -59,6 +63,9 @@ final class VerdictClient
                 'HideGuard verdict request returned HTTP ' . $response->statusCode . '.',
                 $response->statusCode
             );
+        }
+        if (strlen($response->body) > $this->maxResponseBytes) {
+            throw new ApiException('HideGuard verdict response exceeds the size limit.', $response->statusCode);
         }
         try {
             $result = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
