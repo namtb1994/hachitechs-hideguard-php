@@ -85,7 +85,8 @@ final class CurlTransport implements HttpTransport
             }
             return new HttpResponse((int)curl_getinfo($handle, CURLINFO_HTTP_CODE), $response);
         } finally {
-            curl_close($handle);
+            // CurlHandle is freed when unreferenced; curl_close() is a no-op since PHP 8.0 and deprecated in 8.5.
+            unset($handle);
         }
     }
 }
