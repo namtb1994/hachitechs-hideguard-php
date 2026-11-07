@@ -88,7 +88,11 @@ final class MySqlStorageTest extends StorageBehavior
     public function testExplicitSchemaUpgradeAddsAttemptColumnsWithoutLosingExistingRecords(): void
     {
         $table = '`' . $this->databaseFixture->prefix . 'session`';
-        $this->storage->saveSession('scope', new BrowserState('legacy', grantedUntil: 2000));
+        $this->atomic->run(
+            'scope',
+            fn() => $this->storage->saveSession('scope', new BrowserState('legacy', grantedUntil: 2000))
+        );
+
         $this->databaseFixture->pdo->exec('ALTER TABLE ' . $table . ' DROP verification_id, DROP verification_until');
         $this->storage->initializeSchema();
         $this->storage->initializeSchema();

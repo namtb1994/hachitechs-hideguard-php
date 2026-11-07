@@ -8,6 +8,7 @@ use Hachitechs\HideguardPhp\Access\AccessContext;
 use Hachitechs\HideguardPhp\Access\AccessDecision;
 use Hachitechs\HideguardPhp\Access\BrowserState;
 use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Access\RateWindow;
 use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Configuration\RateLimits;
 use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
@@ -44,6 +45,97 @@ abstract class GuardBehavior extends TestCase
             $decision = $guard->preflight($context, $policy, true);
         }
         return $guard->report($context, $policy, $payload, $decision->verificationId);
+    }
+
+    public function testRejectedIdentityDoesNotExhaustScopeBudget(): void
+    {
+        for ($i = 0; $i < 60; $i++) {
+            $this->guard->preflight($this->context, $this->policy);
+        }
+        for ($i = 0; $i < 540; $i++) {
+            $this->assertFailure(
+                FailureReason::RateLimited,
+                fn() => $this->guard->preflight($this->context, $this->policy)
+            );
+        }
+        self::assertSame(60, $this->storage->rate('site', hash('sha256', 'scope'))->requests);
+        self::assertSame(60, $this->storage->rate('site', hash('sha256', 'browser:browser'))->requests);
+        $this->guard->preflight(new AccessContext('site', 'other-browser'), $this->policy);
+        self::assertSame(61, $this->storage->rate('site', hash('sha256', 'scope'))->requests);
+    }
+
+    public function testQuotaRejectionPreservesBothCountersAndLongestDeadline(): void
+    {
+        $this->storage->run('site', function (): void {
+            $this->storage->saveRate('site', hash('sha256', 'scope'), new RateWindow(600, 1030));
+            $this->storage->saveRate('site', hash('sha256', 'browser:browser'), new RateWindow(60, 1050));
+        });
+        $error = $this->assertFailure(
+            FailureReason::RateLimited,
+            fn() => $this->guard->preflight($this->context, $this->policy)
+        );
+        self::assertSame(50, $error->retryAfterSeconds);
+        self::assertSame(600, $this->storage->rate('site', hash('sha256', 'scope'))->requests);
+        self::assertSame(60, $this->storage->rate('site', hash('sha256', 'browser:browser'))->requests);
+        $this->clock->timestamp = 1050;
+        $this->guard->preflight($this->context, $this->policy);
+        self::assertSame(1, $this->storage->rate('site', hash('sha256', 'scope'))->requests);
+        self::assertSame(1, $this->storage->rate('site', hash('sha256', 'browser:browser'))->requests);
+    }
+
+    public function testScopeRejectionDoesNotChargeNewIdentity(): void
+    {
+        $this->storage->run('site', function (): void {
+            $this->storage->saveRate('site', hash('sha256', 'scope'), new RateWindow(600, 1060));
+        });
+        $this->assertFailure(
+            FailureReason::RateLimited,
+            fn() => $this->guard->preflight($this->context, $this->policy)
+        );
+        self::assertNull($this->storage->rate('site', hash('sha256', 'browser:browser')));
+        self::assertSame(600, $this->storage->rate('site', hash('sha256', 'scope'))->requests);
+    }
+
+    public function testWarmPreflightsCoalesceLastSeenButStillConsumeQuota(): void
+    {
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            publicKey: 'key',
+            limits: new RateLimits(scopeRequests: 1000, identityRequests: 1000)
+        );
+        $this->report($this->guard, $this->context, $policy, $this->payload());
+        $this->guard->bindGrant($this->context, $policy, new ResourceRef('quote', '99'));
+        $before = $this->storage->session('site', 'browser');
+        $this->clock->timestamp = 1001;
+        for ($i = 0; $i < 100; $i++) {
+            self::assertSame('allowed', $this->guard->preflight($this->context, $policy)->status);
+        }
+        self::assertEquals($before, $this->storage->session('site', 'browser'));
+        self::assertSame(102, $this->storage->rate('site', hash('sha256', 'scope'))->requests);
+        $this->clock->timestamp = 1060;
+        $this->guard->preflight($this->context, $policy);
+        $after = $this->storage->session('site', 'browser');
+        self::assertSame(1060, $after->lastSeen);
+        $after->lastSeen = $before->lastSeen;
+        self::assertEquals($before, $after);
+    }
+
+    public function testCleanupGracePreservesSessionsAtTheCoalescingBoundary(): void
+    {
+        $policy = new ProtectionPolicy(limits: new RateLimits(sessionRetentionSeconds: 50));
+        $this->storage->run('site', function (): void {
+            $this->storage->saveSession('site', new BrowserState('idle', lastSeen: 1000));
+            $this->storage->saveSession('site', new BrowserState('blocked', blockedUntil: 3000, lastSeen: 1));
+            $this->storage->saveSession('site', new BrowserState('granted', grantedUntil: 3000, lastSeen: 1));
+        });
+        $this->clock->timestamp = 1100;
+        $this->guard->cleanup('site', $policy);
+        self::assertNotNull($this->storage->session('site', 'idle'));
+        $this->clock->timestamp = 1101;
+        $this->guard->cleanup('site', $policy);
+        self::assertNull($this->storage->session('site', 'idle'));
+        self::assertNotNull($this->storage->session('site', 'blocked'));
+        self::assertNotNull($this->storage->session('site', 'granted'));
     }
 
     abstract protected function createStorage(): StorageContract;
@@ -200,7 +292,7 @@ abstract class GuardBehavior extends TestCase
             policyHash: $production->fingerprint(),
             verification: 'unverified_test_mode'
         );
-        $this->storage->saveSession('site', $state);
+        $this->storage->run('site', fn() => $this->storage->saveSession('site', $state));
         self::assertSame('verification_required', $this->guard->inspect($this->context, $production)->status);
     }
 
@@ -350,9 +442,10 @@ abstract class GuardBehavior extends TestCase
         );
         self::assertSame(60, $error->retryAfterSeconds);
         $other = new AccessContext('site', 'other');
+        self::assertSame('verification_required', $this->guard->preflight($other, $policy)->status);
         $this->assertFailure(FailureReason::RateLimited, fn() => $this->guard->preflight($other, $policy));
         $this->clock->timestamp = 1060;
-        self::assertSame('verification_required', $this->guard->preflight($other, $policy)->status);
+        self::assertSame('verification_required', $this->guard->preflight($other, $policy, true)->status);
     }
 
     public function testActorLimitCannotBeBypassedByChangingBrowser(): void

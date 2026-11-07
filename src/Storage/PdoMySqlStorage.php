@@ -11,18 +11,27 @@ use Hachitechs\HideguardPhp\Contracts\AtomicMutationContract;
 use Hachitechs\HideguardPhp\Contracts\StorageContract;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
+use Hachitechs\HideguardPhp\Contracts\PartitionedAtomicMutationContract;
+use Hachitechs\HideguardPhp\Contracts\BatchCleanupContract;
+use Hachitechs\HideguardPhp\Contracts\SessionCounterContract;
+use Hachitechs\HideguardPhp\Access\CleanupResult;
 use PDO;
 use PDOStatement;
 
 /** MySQL 8/InnoDB implementation. Supply a dedicated, non-persistent PDO connection. */
-final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
+final class PdoMySqlStorage implements
+    StorageContract,
+    PartitionedAtomicMutationContract,
+    BatchCleanupContract,
+    SessionCounterContract
 {
-    private readonly string $lockNamespace;
+    private readonly MySqlControl $control;
+    private readonly MySqlCoordinator $coordinator;
 
     public function __construct(
         private readonly PDO $pdo,
         private readonly string $prefix = 'hideguard_',
-        private readonly int $lockWaitSeconds = 1
+        int $lockWaitSeconds = 1
     ) {
         if (
             $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql'
@@ -40,7 +49,13 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
         if (!is_string($database) || $database === '') {
             throw new \InvalidArgumentException('Select a database in the PDO connection DSN.');
         }
-        $this->lockNamespace = $database . ':' . $prefix;
+        $this->control = new MySqlControl($pdo, $prefix . 'control', 'scope_id', $prefix . 'session');
+        $this->coordinator = new MySqlCoordinator(
+            $pdo,
+            $this->control,
+            fn(string $scope, string $browser) => $this->session($scope, $browser),
+            $lockWaitSeconds
+        );
     }
 
     /** Explicit setup only. Never run DDL inside an access mutation or an application request. */
@@ -65,54 +80,37 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
         }
         $engines = $this->execute(
             'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() '
-            . 'AND TABLE_NAME IN (?, ?, ?)',
-            [$this->prefix . 'session', $this->prefix . 'block', $this->prefix . 'rate']
+            . 'AND TABLE_NAME IN (?, ?, ?, ?)',
+            [$this->prefix . 'session', $this->prefix . 'block', $this->prefix . 'rate', $this->prefix . 'control']
         )->fetchAll(PDO::FETCH_COLUMN);
-        if (count($engines) !== 3 || array_diff($engines, ['InnoDB']) !== []) {
+        if (count($engines) !== 4 || array_diff($engines, ['InnoDB']) !== []) {
             throw new \LogicException('All access storage tables must use InnoDB transactions.');
+        }
+        $scopes = $this->execute('SELECT DISTINCT scope_id FROM ' . $this->table('session'))
+            ->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($scopes as $scope) {
+            $this->run((string)$scope, fn() => $this->reconcileSessionCount((string)$scope));
         }
     }
 
     public function run(string $scopeId, callable $work): mixed
     {
-        if ($this->pdo->inTransaction()) {
-            throw new \LogicException('Use a dedicated PDO connection; nested access transactions are unsupported.');
-        }
-        $name = hash('sha256', $this->lockNamespace . ':' . $scopeId);
-        if ((int)$this->execute('SELECT GET_LOCK(?, ?)', [$name, $this->lockWaitSeconds])->fetchColumn() !== 1) {
-            throw new GuardException(FailureReason::Busy, 'Access storage is busy. Retry shortly.', 1);
-        }
-        try {
-            return $this->transaction($work);
-        } finally {
-            $this->execute('SELECT RELEASE_LOCK(?)', [$name]);
-        }
+        return $this->coordinator->run($scopeId, $work);
     }
 
-    /**
-     * @template T
-     * @param callable(): T $work
-     * @return T
-     */
-    private function transaction(callable $work): mixed
+    public function runBrowser(string $scopeId, string $browserId, ?ResourceRef $resource, callable $work): mixed
     {
-        $this->pdo->beginTransaction();
-        try {
-            try {
-                $result = $work();
-            } catch (GuardException $error) {
-                // Intentional revocation and consumed rate counters must survive a domain rejection.
-                $this->pdo->commit();
-                throw $error;
-            }
-            $this->pdo->commit();
-            return $result;
-        } catch (\Throwable $error) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-            throw $error;
-        }
+        return $this->coordinator->runBrowser($scopeId, $browserId, $resource, $work);
+    }
+
+    public function runResource(string $scopeId, ResourceRef $resource, callable $work): mixed
+    {
+        return $this->coordinator->runResource($scopeId, $resource, $work);
+    }
+
+    public function reconcileSessionCount(string $scopeId): int
+    {
+        return $this->control->reconcile($scopeId);
     }
 
     public function session(string $scopeId, string $browserId): ?BrowserState
@@ -125,6 +123,7 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
 
     public function saveSession(string $scopeId, BrowserState $state): void
     {
+        $new = $this->control->beforeSave($scopeId, $state->browserId, 'browser_id');
         $this->execute(
             'INSERT INTO ' . $this->table('session') . ' (scope_id, browser_id, actor_id, visitor_id, blocked_until, '
             . 'granted_until, policy_hash, resource_type, resource_id, last_seen, verification, '
@@ -141,14 +140,14 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
                 $state->lastSeen, $state->verification, $state->verificationId, $state->verificationUntil,
             ]
         );
+        if ($new) {
+            $this->control->inserted($scopeId);
+        }
     }
 
     public function sessionCount(string $scopeId): int
     {
-        return (int)$this->execute(
-            'SELECT COUNT(*) FROM ' . $this->table('session') . ' WHERE scope_id = ?',
-            [$scopeId]
-        )->fetchColumn();
+        return $this->control->count($scopeId);
     }
 
     public function blockExpiry(string $scopeId, ?string $visitorId, ?string $actorId): int
@@ -237,6 +236,10 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
 
     public function rate(string $scopeId, string $bucketHash): ?RateWindow
     {
+        if ($this->pdo->inTransaction() && $bucketHash === hash('sha256', 'scope')) {
+            $row = $this->control->lockScopeRate($this->prefix . 'rate', $scopeId, $bucketHash);
+            return $row === null ? null : new RateWindow((int)$row['requests'], (int)$row['expires_at']);
+        }
         $row = $this->execute(
             'SELECT requests, expires_at FROM ' . $this->table('rate') . ' WHERE scope_id = ? AND bucket_hash = ?',
             [$scopeId, $bucketHash]
@@ -256,19 +259,42 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
 
     public function cleanup(string $scopeId, int $now, int $inactiveBefore): void
     {
-        $this->execute(
-            'DELETE FROM ' . $this->table('block') . ' WHERE scope_id = ? AND blocked_until <= ?',
-            [$scopeId, $now]
-        );
-        $this->execute(
-            'DELETE FROM ' . $this->table('rate') . ' WHERE scope_id = ? AND expires_at <= ?',
-            [$scopeId, $now]
-        );
-        $this->execute(
-            'DELETE FROM ' . $this->table('session') . ' WHERE scope_id = ? AND last_seen < ? '
-            . 'AND blocked_until <= ? AND granted_until <= ?',
-            [$scopeId, $inactiveBefore, $now, $now]
-        );
+        while ($this->cleanupBatch($scopeId, $now, $inactiveBefore, 500)->hasMore) {
+        }
+    }
+
+    public function cleanupBatch(string $scopeId, int $now, int $inactiveBefore, int $limit): CleanupResult
+    {
+        if ($limit < 1 || $limit > 10000) {
+            throw new \InvalidArgumentException('Batch limit must be between 1 and 10000.');
+        }
+        $counts = [];
+        $conditions = [
+            'block' => ['blocked_until<=?', [$now]],
+            'rate' => ['expires_at<=?', [$now]],
+            'session' => ['last_seen<? AND blocked_until<=? AND granted_until<=? AND verification_until<=?',
+                [$inactiveBefore, $now, $now, $now]],
+        ];
+        $remaining = $limit;
+        foreach ($conditions as $suffix => [$where, $params]) {
+            $counts[$suffix] = 0;
+            if ($remaining === 0) {
+                continue;
+            }
+            if ($suffix === 'session') {
+                $this->control->count($scopeId);
+            }
+            $counts[$suffix] = $this->execute(
+                'DELETE FROM ' . $this->table($suffix)
+                . ' WHERE scope_id=? AND ' . $where . ' LIMIT ' . $remaining,
+                array_merge([$scopeId], $params)
+            )->rowCount();
+            if ($suffix === 'session') {
+                $this->control->removed($scopeId, $counts[$suffix]);
+            }
+            $remaining -= $counts[$suffix];
+        }
+        return new CleanupResult($counts['block'], $counts['rate'], $counts['session'], $remaining === 0);
     }
 
     /** @param list<int|string|null> $params */
@@ -337,6 +363,10 @@ final class PdoMySqlStorage implements StorageContract, AtomicMutationContract
     private function schemaStatements(): array
     {
         return [
+            'CREATE TABLE IF NOT EXISTS ' . $this->table('control') . ' ('
+            . 'scope_id VARBINARY(128) NOT NULL, name VARBINARY(32) NOT NULL, '
+            . 'value BIGINT UNSIGNED NOT NULL DEFAULT 0, initialized SMALLINT UNSIGNED NOT NULL DEFAULT 0, '
+            . 'PRIMARY KEY (scope_id, name)) ENGINE=InnoDB',
             'CREATE TABLE IF NOT EXISTS ' . $this->table('session') . ' ('
             . 'scope_id VARBINARY(128) NOT NULL, browser_id VARBINARY(128) NOT NULL, '
             . 'actor_id VARBINARY(128) NULL, visitor_id VARBINARY(128) NULL, '

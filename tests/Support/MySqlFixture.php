@@ -32,7 +32,7 @@ final class MySqlFixture
 
     public function dispose(): void
     {
-        foreach (['session', 'block', 'rate'] as $suffix) {
+        foreach (['session', 'block', 'rate', 'control'] as $suffix) {
             $this->pdo->exec('DROP TABLE `' . $this->prefix . $suffix . '`');
         }
     }

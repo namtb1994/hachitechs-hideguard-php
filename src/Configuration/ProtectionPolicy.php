@@ -11,12 +11,15 @@ use Hachitechs\HideguardPhp\Support\EndpointUrl;
 
 final class ProtectionPolicy
 {
-    public const ENVIRONMENTS = ['development', 'staging', 'production'];
+    public const ENVIRONMENTS = ['development', 'production'];
+    // Accepted for existing framework adapters; new configuration exposes only two modes.
+    private const LEGACY_ENVIRONMENTS = ['staging'];
     public const BLOCK_DURATIONS = [900, 3600, 21600, 86400];
     public const PASS_DURATIONS = [0, 60, 300, 900, 3600];
     public const DEFAULT_PASS_DURATION = 300;
     public const ALWAYS_GRANT_SECONDS = 300;
     public const DEFAULT_ENDPOINT_URL = 'https://hideguard.io';
+    public const TEST_ENDPOINT_URL = 'https://dev.hideguard.io';
 
     public readonly string $endpointUrl;
 
@@ -34,12 +37,12 @@ final class ProtectionPolicy
         public readonly int $blockDuration = 3600,
         public readonly int $passDuration = self::DEFAULT_PASS_DURATION,
         public readonly RateLimits $limits = new RateLimits(),
-        string $endpointUrl = self::DEFAULT_ENDPOINT_URL,
+        ?string $endpointUrl = null,
         public readonly int $verificationTimeout = 35
     ) {
-        $this->endpointUrl = EndpointUrl::normalize($endpointUrl);
+        $this->endpointUrl = EndpointUrl::normalize($endpointUrl ?? self::defaultEndpointUrl($environment));
         if (
-            !in_array($environment, self::ENVIRONMENTS, true)
+            !in_array($environment, [...self::ENVIRONMENTS, ...self::LEGACY_ENVIRONMENTS], true)
             || !in_array($blockDuration, self::BLOCK_DURATIONS, true)
             || !in_array($passDuration, self::PASS_DURATIONS, true)
             || $verificationTimeout < 5 || $verificationTimeout > 120
@@ -66,6 +69,16 @@ final class ProtectionPolicy
         ) {
             throw new GuardException(FailureReason::InvalidConfiguration, 'The active environment requires keys.');
         }
+    }
+
+    /** Framework-independent endpoint defaults; explicit HTTPS origins remain supported by the package. */
+    public static function defaultEndpointUrl(string $environment): string
+    {
+        return match ($environment) {
+            'development', 'staging' => self::TEST_ENDPOINT_URL,
+            'production' => self::DEFAULT_ENDPOINT_URL,
+            default => throw new GuardException(FailureReason::InvalidConfiguration, 'Invalid environment.'),
+        };
     }
 
     public function protects(string $point): bool

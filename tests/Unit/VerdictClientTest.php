@@ -49,7 +49,7 @@ final class VerdictClientTest extends TestCase
 
     public function testQuotesBackslashesAndUnicodeInVisitorIdAreJsonEncoded(): void
     {
-        $visitorId = 'visitor"\\khách';
+        $visitorId = 'visitor"\\customer-😀';
         $transport = $this->createMock(HttpTransport::class);
         $transport->expects(self::once())->method('post')->with(
             'https://example.com/api/v1/verdict',

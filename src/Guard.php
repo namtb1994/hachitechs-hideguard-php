@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Hachitechs\HideguardPhp;
 
+use Hachitechs\HideguardPhp\Access\CleanupResult;
+use Hachitechs\HideguardPhp\Contracts\BatchGuardContract;
+use Hachitechs\HideguardPhp\Contracts\BatchCleanupContract;
+use Hachitechs\HideguardPhp\Contracts\PartitionedAtomicMutationContract;
 use Hachitechs\HideguardPhp\Access\AccessContext;
 use Hachitechs\HideguardPhp\Access\AccessDecision;
 use Hachitechs\HideguardPhp\Access\BrowserState;
@@ -20,7 +24,7 @@ use Hachitechs\HideguardPhp\Verification\VerdictPolicy;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 
-final class Guard implements GuardContract
+final class Guard implements GuardContract, BatchGuardContract
 {
     public function __construct(
         private readonly StorageContract $storage,
@@ -49,7 +53,7 @@ final class Guard implements GuardContract
 
     public function preflight(AccessContext $context, ProtectionPolicy $policy, bool $retry = false): AccessDecision
     {
-        return $this->atomic->run($context->scopeId, function () use ($context, $policy, $retry): AccessDecision {
+        return $this->browserMutation($context, function () use ($context, $policy, $retry): AccessDecision {
             $this->requireEnabled($policy);
             $now = $this->now();
             $state = $this->storage->session($context->scopeId, $context->browserId);
@@ -73,6 +77,7 @@ final class Guard implements GuardContract
                 $state->revoke(cancelVerification: false);
                 $state->verificationUntil = $now;
             }
+            $lastSeen = $state?->lastSeen;
             try {
                 $state = $this->prepare($context, $policy, $state, $now);
             } catch (GuardException $error) {
@@ -83,7 +88,10 @@ final class Guard implements GuardContract
                 throw $error;
             }
             if ($reuse) {
-                $this->storage->saveSession($context->scopeId, $state);
+                // Reuse changes no security fields; rate accounting still runs for every admission.
+                if ($lastSeen === null || $now - $lastSeen >= min(60, $policy->limits->sessionRetentionSeconds)) {
+                    $this->storage->saveSession($context->scopeId, $state);
+                }
                 return $decision;
             }
             // Starting a required check also revokes the previous resource grant, including Always mode.
@@ -220,7 +228,7 @@ final class Guard implements GuardContract
         ProtectionPolicy $policy,
         string $verificationId
     ): AccessDecision {
-        return $this->atomic->run($context->scopeId, function () use (
+        return $this->browserMutation($context, function () use (
             $context,
             $policy,
             $verificationId
@@ -251,7 +259,7 @@ final class Guard implements GuardContract
 
     public function bindGrant(AccessContext $context, ProtectionPolicy $policy, ResourceRef $resource): void
     {
-        $this->atomic->run($context->scopeId, function () use ($context, $policy, $resource): void {
+        $this->browserMutation($context, function () use ($context, $policy, $resource): void {
             if ($context->actorId !== $resource->actorId || $this->inspect($context, $policy)->status !== 'allowed') {
                 throw new GuardException(
                     FailureReason::PermissionDenied,
@@ -259,14 +267,14 @@ final class Guard implements GuardContract
                 );
             }
             $this->storage->bindResource($context->scopeId, $context->browserId, $resource);
-        });
+        }, $resource);
     }
 
     /** For headless/business actions, use resource ownership from trusted server data. */
     public function assertResourceAllowed(string $scopeId, ProtectionPolicy $policy, ResourceRef $resource): void
     {
         AccessContext::validateId($scopeId);
-        $this->atomic->run($scopeId, function () use ($scopeId, $policy, $resource): void {
+        $this->resourceMutation($scopeId, $resource, function () use ($scopeId, $policy, $resource): void {
             $state = $this->storage->resource($scopeId, $resource);
             if (
                 $state === null || $this->decision($scopeId, $state, $resource->actorId, $policy, $this->now())
@@ -280,7 +288,7 @@ final class Guard implements GuardContract
     public function consumeGrant(string $scopeId, ResourceRef $resource): void
     {
         AccessContext::validateId($scopeId);
-        $this->atomic->run($scopeId, fn() => $this->storage->revokeResource($scopeId, $resource));
+        $this->resourceMutation($scopeId, $resource, fn() => $this->storage->revokeResource($scopeId, $resource));
     }
 
     public function revokeScope(string $scopeId): void
@@ -295,13 +303,57 @@ final class Guard implements GuardContract
         return $this->atomic->run($scopeId, fn(): int => $this->storage->resetBlocks($scopeId));
     }
 
+    public function supportsBatchCleanup(): bool
+    {
+        return $this->storage instanceof BatchCleanupContract;
+    }
+
+    public function cleanupBatch(string $scopeId, ProtectionPolicy $policy, int $limit = 500): CleanupResult
+    {
+        AccessContext::validateId($scopeId);
+        $storage = $this->storage;
+        if (!$storage instanceof BatchCleanupContract) {
+            throw new \LogicException('Storage does not support bounded cleanup.');
+        }
+        return $this->atomic->run($scopeId, function () use ($scopeId, $policy, $limit, $storage): CleanupResult {
+            $now = $this->now();
+            $retention = $policy->limits->sessionRetentionSeconds;
+            return $storage->cleanupBatch($scopeId, $now, $now - $retention - min(60, $retention), $limit);
+        });
+    }
+
     public function cleanup(string $scopeId, ProtectionPolicy $policy): void
     {
         AccessContext::validateId($scopeId);
+        if ($this->supportsBatchCleanup()) {
+            for ($batch = 0; $batch < 10; $batch++) {
+                if (!$this->cleanupBatch($scopeId, $policy)->hasMore) {
+                    break;
+                }
+            }
+            return;
+        }
         $this->atomic->run($scopeId, function () use ($scopeId, $policy): void {
             $now = $this->now();
-            $this->storage->cleanup($scopeId, $now, $now - $policy->limits->sessionRetentionSeconds);
+            $retention = $policy->limits->sessionRetentionSeconds;
+            $this->storage->cleanup($scopeId, $now, $now - $retention - min(60, $retention));
         });
+    }
+
+    private function browserMutation(AccessContext $context, callable $work, ?ResourceRef $resource = null): mixed
+    {
+        if ($this->atomic instanceof PartitionedAtomicMutationContract) {
+            return $this->atomic->runBrowser($context->scopeId, $context->browserId, $resource, $work);
+        }
+        return $this->atomic->run($context->scopeId, $work);
+    }
+
+    private function resourceMutation(string $scopeId, ResourceRef $resource, callable $work): mixed
+    {
+        if ($this->atomic instanceof PartitionedAtomicMutationContract) {
+            return $this->atomic->runResource($scopeId, $resource, $work);
+        }
+        return $this->atomic->run($scopeId, $work);
     }
 
     private function now(): int
@@ -324,6 +376,8 @@ final class Guard implements GuardContract
             ($context->actorId !== null ? 'actor:' . $context->actorId : 'browser:' . $context->browserId)
                 => $policy->limits->identityRequests,
         ];
+        $windows = [];
+        $retryAfter = 0;
         foreach ($limits as $key => $limit) {
             $hash = hash('sha256', $key);
             $window = $this->storage->rate($context->scopeId, $hash);
@@ -331,12 +385,15 @@ final class Guard implements GuardContract
                 $window = new RateWindow(0, $now + $policy->limits->windowSeconds);
             }
             if ($window->requests >= $limit) {
-                throw new GuardException(
-                    FailureReason::RateLimited,
-                    'Too many access requests.',
-                    $window->expiresAt - $now
-                );
+                $retryAfter = max($retryAfter, $window->expiresAt - $now);
             }
+            $windows[$hash] = $window;
+        }
+        // Admit both budgets together: a rejected identity must not exhaust its scope's budget.
+        if ($retryAfter > 0) {
+            throw new GuardException(FailureReason::RateLimited, 'Too many access requests.', $retryAfter);
+        }
+        foreach ($windows as $hash => $window) {
             $this->storage->saveRate(
                 $context->scopeId,
                 $hash,
@@ -368,6 +425,13 @@ final class Guard implements GuardContract
         int $until,
         int $now
     ): void {
+        // Keep the first sticky block/revocation durable, without rewriting an unchanged denial.
+        if (
+            $state !== null && $state->blockedUntil >= $until && $state->grantedUntil === 0
+            && $state->resource === null && $state->verificationId === null && $state->verificationUntil === 0
+        ) {
+            return;
+        }
         if ($state === null && $this->storage->sessionCount($context->scopeId) >= $policy->limits->sessionCapacity) {
             throw new GuardException(FailureReason::CapacityReached, 'Browser session storage is at capacity.');
         }

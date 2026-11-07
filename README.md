@@ -1,43 +1,63 @@
 # hachitechs/hideguard-php
 
-Framework independent access-control core for HideGuard, PHP **8.1+**. This local
-package is extracted from `Hachitech_AntidetectBrowser`.
-It has not been published to a Composer registry.
+Framework-independent access protection for PHP **8.1+**. Production dependencies
+are only PHP, `psr/clock` and `psr/log`. No Magento, Laravel, WordPress, Symfony,
+container, framework HTTP client or ORM is required. Optional supplied adapters
+use cURL, Sodium or PDO MySQL as described below.
 
-Production dependencies are only PHP, `psr/clock` and `psr/log`. No Magento,
-WordPress, Laravel, Symfony, container, third-party HTTP client or ORM is required.
-The optional server-side verdict client uses `ext-curl` by default, or an injected
-HTTP transport supplied by the application.
-The shared browser runtime ships as prebuilt ESM/AMD. The Magento module now
-uses this core through native adapters. A separate
-[WordPress plugin](../antidetect-wordpress/README.md) and
-[Laravel example](../antidetect-laravel-example/README.md) demonstrate native
-integration without adding platform dependencies to the core.
+## Version and installation
 
-## Install for development
+**1.0.0 is the first stable distribution.** This source includes the traffic/storage
+capabilities and two-mode endpoint defaults used by the matching Magento module.
+Publish the `v1.0.0` Git tag before installing it through VCS. Composer derives the
+version from that tag; no hardcoded `version` field is needed in the library
+manifest. Preparing these files does not itself commit, tag or publish a release.
 
-From this package directory:
+Configure the private VCS repository in the application's root `composer.json`:
 
-```bash
-composer install
+```json
+{
+    "type": "vcs",
+    "url": "https://github.com/namtb1994/hachitechs-hideguard-php.git",
+    "only": ["hachitechs/hideguard-php"]
+}
 ```
 
-For an application's Composer project, add a local path repository pointing at
-this directory, pin its development version, and require the library:
+After the matching release is available, run from the application root:
+
+```sh
+composer require hachitechs/hideguard-php:^1.0
+```
+
+Keep repository credentials outside committed files. Composer uses repositories
+from the root project, not those declared by a dependency. Commit the application
+lockfile for reproducible installations. Installation does not initialize database
+tables, intercept routes or publish browser assets.
+
+For local development **before release**, use an explicit path repository and a
+local development alias in the application root:
 
 ```json
 {
     "repositories": [{
         "type": "path",
-        "url": "/absolute/path/to/packages/antidetect-php",
-        "options": {"versions": {"hachitechs/hideguard-php": "0.1.0"}}
+        "url": "../hachitechs-hideguard-php",
+        "options": {
+            "symlink": true,
+            "versions": {"hachitechs/hideguard-php": "dev-master"}
+        }
     }],
-    "require": {"hachitechs/hideguard-php": "^0.1"}
+    "require": {"hachitechs/hideguard-php": "dev-master as 1.0.0"}
 }
 ```
 
-Use the eventual registry/repository release instead of this path configuration
-when distributing adapters. Installation does not initialize tables or assets.
+Adjust the path to your checkout and keep existing root repositories/requirements.
+The alias satisfies a module's `^1.0` constraint for local work; it does not create
+a release, include uncommitted files in a remote tag or prove remote availability.
+Do not use a development alias as a substitute for a production release.
+
+To work on this package itself, run `composer install` from its source checkout.
+Its test and browser build dependencies are development-only.
 
 ## PHP namespace
 
@@ -127,6 +147,24 @@ must never be used to trust payloads supplied by a browser.
 HideGuard validates the registered domain and SDK public key, plus the secret
 API key for private backend requests. Signed collect responses are checked with
 the trusted signature public key, environment and freshness policy.
+
+## Environment endpoint defaults
+
+`ProtectionPolicy::ENVIRONMENTS` offers two modes: `development` (Testing) and
+`production`. Omitting `endpointUrl` selects `https://dev.hideguard.io` for Testing
+and `https://hideguard.io` for Production. Use
+`ProtectionPolicy::defaultEndpointUrl($environment)` when an adapter needs the
+same host for its SDK, CSP and backend verdict client. `DEFAULT_ENDPOINT_URL`
+remains the production-origin constant; it is not the default for every mode.
+
+An explicitly supplied HTTPS `endpointUrl` remains supported for PHP applications
+that require another origin. The package has no framework or deployment-config
+dependency. Existing adapters may still construct a policy with legacy `staging`
+(defaults to the testing host); new UI should offer only the two supported modes.
+Signature verification rules are unchanged. Existing grants tied to a different
+endpoint have a different policy fingerprint and require verification again;
+active blocks keep their deadlines. The standalone VerdictClient still takes an
+explicit baseUrl; pass the policy endpoint to share its mode selection.
 
 ## Use from plain PHP
 
@@ -223,8 +261,8 @@ Storage adapters must persist the appended `BrowserState::verificationId` and
 `verificationUntil` fields (SQL: nullable `verification_id` CHAR(32) and
 `verification_until` unsigned integer default 0). Existing custom adapters need
 an explicit schema upgrade. Run PDO `initializeSchema()` during deployment to
-apply its additive upgrade, never during a web request. Magento uses declarative
-schema; WordPress uses its activation/setup `dbDelta`.
+apply its additive upgrade, never during a web request. Framework adapters own their schema migrations; the Magento adapter uses
+declarative schema instead of the standalone initializer.
 
 This protocol needs no framework, router, PHP session implementation, HTTP library
 or database engine. WordPress hooks, Laravel middleware and plain PHP routing
@@ -254,13 +292,102 @@ Without a supplied verifier, reports fail closed using `UnavailableVerifier`.
 `DevelopmentVerifier` remains an explicit unsigned demo option and refuses
 staging/production. Magento uses Ed25519 verification in every environment.
 The current signed response has no browser/actor nonce: signatures and bounded
-deadlines do not provide single-use or browser-session binding. See the contract
-for the supported payload, per-site key assumption and replay limits.
+deadlines do not provide single-use or browser-session binding. See `src/Verification/Ed25519Verifier.php` and the verification tests for the
+supported payload, per-site key assumption and replay limits.
 
-See [the API/storage/verification contract](docs/CONTRACT.md),
-[browser integration/build guide](docs/BROWSER.md) and
-[extraction progress](docs/PROGRESS.md). Factories, injectable contracts and typed
-results follow the design approach of [openai-php/client](https://github.com/openai-php/client).
+## Traffic, storage and optional capabilities
+
+Default `RateLimits` are 600 scope admissions and 60 identity admissions per
+60-second window, 10,000 stored sessions per scope and 30 days of inactive-session
+retention. Identity is the authenticated actor when available, otherwise the
+server-owned browser identity. These are policy parameters rather than framework
+configuration. Applications can pass a `RateLimits` instance to `ProtectionPolicy`.
+
+`preflight` still accounts for each rate admission while coalescing unchanged
+last-seen writes for `min(60, retention)` seconds. New verification state,
+revocations, blocks, grants and resource bindings are persisted immediately.
+An active persisted block can return without creating repeated browser rows.
+
+`PdoMySqlStorage` provides MySQL 8/InnoDB storage and atomic mutations on one
+dedicated, non-persistent PDO connection. `initializeSchema()` creates/additively
+upgrades `session`, `block`, `rate` and `control` tables under the supplied prefix.
+Run it explicitly during setup, never inside a web request or business transaction.
+Counters update transactionally. Run explicit `reconcileSessionCount($scopeId)`
+repairs inside `$storage->run($scopeId, ...)` under the exclusive scope fence;
+do not delete stored sessions to reset capacity.
+
+The optional capabilities are:
+
+| Contract / implementation | Purpose |
+| --- | --- |
+| `PartitionedAtomicMutationContract` / `MySqlCoordinator` | Browser/resource work may use narrower locks under a shared scope fence; report/revocation/maintenance retain exclusive fencing. Shared quotas and capacity still require atomic admission. |
+| `SessionCounterContract` / `MySqlControl` | Maintain capacity counts transactionally instead of recounting the entire session table on each admission. |
+| `BatchCleanupContract` / `BatchGuardContract` | Bound cleanup work and expose `CleanupResult::hasMore` so a scheduler can choose its work budget. |
+| `CircuitBreakerStoreContract` / `CircuitBreakingTransport` | Shared upstream failure state, single recovery probe, no automatic retry or cached Allow fallback. |
+
+Existing adapters implementing only the base storage/atomic contracts keep the
+conservative whole-scope fallback. Custom adapters must preserve serialization,
+resource transfer, quota/capacity and commit/rollback contracts. Domain-denial
+security mutations must commit; infrastructure failures roll back. Unsupported
+nested/external transactions are rejected by the supplied MySQL coordinator.
+
+For bounded scheduled cleanup, check `supportsBatchCleanup()` and call
+`cleanupBatch($scopeId, $policy, $limit)` repeatedly within your scheduler budget.
+With batch support, `Guard::cleanup()` attempts at most ten batches of 500 rows.
+Low-level `PdoMySqlStorage::cleanup()` drains its batches, so schedulers needing a
+strict row budget should use the batch API. Adapters without batch support retain
+their existing cleanup contract.
+Active grant/block state remains protected from inactivity cleanup.
+
+The circuit decorator is opt-in for PHP applications. `CircuitBreakerPolicy`
+defaults to threshold 5, failure window 60 seconds, open duration 30 seconds and
+probe lease 15 seconds. The lease must exceed the wrapped HTTP total timeout.
+`PdoCircuitBreakerStore` has its own explicit `initializeSchema()`; use a connection
+separate from the Guard and business transactions. Framework adapters decide
+whether and how to enable the decorator. The Magento module fixes it on; the PHP
+core does not read Magento configuration or force it on other applications.
+
+## Browser runtime and examples
+
+`browser/src` contains the shared runtime and interaction lock. `browser/dist`
+contains ready-to-use ESM, AMD, LESS and generated style exports. The runtime starts
+the HideGuard SDK when needed, reports through adapter-provided endpoints and
+waits for a backend-confirmed decision before unlocking interactions. Supply the
+policy's `endpointUrl`; a caller omitting browser configuration must not assume
+that the JavaScript fallback selects its PHP environment automatically.
+
+The application owns identity, CSRF, HTTP endpoints, page selection, denial mapping
+and business authorization. Browser code cannot replace a server-side action
+check. A server-only `VerdictClient` consumer does not need browser assets.
+
+Build from a source checkout when changing the shared runtime:
+
+```sh
+cd browser
+npm ci --ignore-scripts
+npm run build
+npm run check
+npm test
+```
+
+Publish/check the prebuilt AMD and LESS files into an existing Magento module:
+
+```sh
+node browser/publish-magento.mjs /path/to/module-hideguard
+node browser/publish-magento.mjs /path/to/module-hideguard --check
+```
+
+Run these publish commands from the package root. Node/esbuild/LESS are development
+build tools, not PHP or browser-runtime dependencies. Source/build scripts may be
+excluded from distribution archives; prebuilt `browser/dist` remains available.
+Do not edit generated AMD/ESM bundles independently of their source.
+
+`examples/plain-php` demonstrates native PHP CLI and web integration. It is not
+loaded by Composer's production autoloader and Magento does not execute it. The
+CLI demo simulates verdicts; the [web example](examples/plain-php/web/README.md)
+shows local sessions, CSRF, protected pages and resource-bound forms. These demos
+explicitly use `DevelopmentVerifier` and are not production signature verification
+examples. Use the Ed25519 integration shown above for production browser reports.
 
 ## Checks
 
@@ -276,6 +403,9 @@ include MySQL tests. Otherwise those tests are explicitly skipped. Integration
 creates/drops only randomly named `hg_test_*` tables and tests real process
 concurrency; never point it at application guard table names.
 
-The workflow under `.github/workflows` runs when this directory is extracted
-into its own repository. It does not register a workflow in the enclosing
-Magento repository. Local results and limitations are recorded in PROGRESS.md.
+The workflow in `.github/workflows/tests.yml` configures PHP 8.1/8.2 and MySQL
+checks plus a separate Node 22 browser job when run in this package repository.
+It is not a workflow of a parent Magento checkout, and its presence is not evidence
+that a particular remote run passed. Local runtime verification has used PHP 8.5;
+production capacity, a full PHP-version matrix and real payment E2E are not inferred
+from those checks.

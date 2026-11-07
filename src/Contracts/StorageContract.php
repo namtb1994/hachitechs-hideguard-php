@@ -8,7 +8,7 @@ use Hachitechs\HideguardPhp\Access\BrowserState;
 use Hachitechs\HideguardPhp\Access\RateWindow;
 use Hachitechs\HideguardPhp\Access\ResourceRef;
 
-/** Writes occur inside AtomicMutationContract::run on the same connection. */
+/** Writes occur inside an appropriate atomic scope/browser/resource operation on the same connection. */
 interface StorageContract
 {
     public function session(string $scopeId, string $browserId): ?BrowserState;

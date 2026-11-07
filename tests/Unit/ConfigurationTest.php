@@ -18,12 +18,39 @@ final class ConfigurationTest extends TestCase
     public function testDefaultsAndCustomBusinessPointDoNotRequireCommerceFramework(): void
     {
         self::assertSame(300, (new ProtectionPolicy())->passDuration);
-        self::assertSame('https://hideguard.io', (new ProtectionPolicy())->endpointUrl);
+        self::assertSame('https://dev.hideguard.io', (new ProtectionPolicy())->endpointUrl);
         $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', accessPoints: ['document.download']);
         self::assertTrue($policy->protects('document.download'));
         self::assertFalse($policy->protects('cart'));
         self::assertSame('user-uuid', (new AccessContext('tenant-uuid', 'browser', 'user-uuid'))->actorId);
         self::assertNull((new AccessContext('tenant', 'browser'))->actorId);
+    }
+
+    /** @dataProvider defaultOrigins */
+    public function testEnvironmentSelectsDefaultOrigin(string $environment, string $expected): void
+    {
+        self::assertSame($expected, ProtectionPolicy::defaultEndpointUrl($environment));
+        self::assertSame($expected, (new ProtectionPolicy(environment: $environment))->endpointUrl);
+        self::assertSame('https://custom.example', (new ProtectionPolicy(
+            environment: $environment,
+            endpointUrl: 'https://custom.example/'
+        ))->endpointUrl);
+    }
+
+    public static function defaultOrigins(): array
+    {
+        return [
+            ['development', 'https://dev.hideguard.io'],
+            ['production', 'https://hideguard.io'],
+            ['staging', 'https://dev.hideguard.io'], // Compatibility for existing non-Magento adapters.
+        ];
+    }
+
+    public function testOnlyTwoModesAreOfferedAndUnknownDefaultEnvironmentFails(): void
+    {
+        self::assertSame(['development', 'production'], ProtectionPolicy::ENVIRONMENTS);
+        $this->expectException(GuardException::class);
+        ProtectionPolicy::defaultEndpointUrl('unknown');
     }
 
     /** @dataProvider endpointUrls */
@@ -69,7 +96,7 @@ final class ConfigurationTest extends TestCase
         $default = new ProtectionPolicy();
         self::assertSame(
             $default->fingerprint(),
-            (new ProtectionPolicy(endpointUrl: 'HTTPS://HIDEGUARD.IO:443/'))->fingerprint()
+            (new ProtectionPolicy(endpointUrl: 'HTTPS://DEV.HIDEGUARD.IO:443/'))->fingerprint()
         );
         self::assertNotSame(
             $default->fingerprint(),
