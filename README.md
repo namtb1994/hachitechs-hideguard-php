@@ -10,37 +10,28 @@ No Magento, Laravel, WordPress, Symfony,
 container, framework HTTP client or ORM is required. Optional supplied adapters
 use cURL, Sodium or PDO MySQL as described below.
 
-## Version and installation
+## Installation
 
-**1.0.0 is the first stable distribution.** This source includes the traffic/storage
-capabilities and two-mode endpoint defaults used by the matching Magento module.
-Publish the `v1.0.0` Git tag before installing it through VCS. Composer derives the
-version from that tag; no hardcoded `version` field is needed in the library
-manifest. Preparing these files does not itself commit, tag or publish a release.
-
-Configure the private VCS repository in the application's root `composer.json`:
-
-```json
-{
-    "type": "vcs",
-    "url": "https://github.com/namtb1994/hachitechs-hideguard-php.git",
-    "only": ["hachitechs/hideguard-php"]
-}
-```
-
-After the matching release is available, run from the application root:
+Install [hachitechs/hideguard-php on Packagist](https://packagist.org/packages/hachitechs/hideguard-php)
+with Composer from your application root:
 
 ```sh
-composer require hachitechs/hideguard-php:^1.0
+composer require hachitechs/hideguard-php:^1.0.1
 ```
 
-Keep repository credentials outside committed files. Composer uses repositories
-from the root project, not those declared by a dependency. Commit the application
-lockfile for reproducible installations. Installation does not initialize database
-tables, intercept routes or publish browser assets.
+No custom VCS repository configuration or GitHub credentials are required.
+See [GitHub releases](https://github.com/namtb1994/hachitechs-hideguard-php/releases)
+for release notes. Composer derives package versions from Git tags; the library
+manifest does not need a hardcoded `version` field.
 
-For local development **before release**, use an explicit path repository and a
-local development alias in the application root:
+Commit your application's `composer.lock` for reproducible installations.
+Installation does not initialize database tables, intercept routes or publish
+browser assets.
+
+### Local development
+
+To test unpublished changes from a local checkout, use a path repository and a
+development alias in your application's root `composer.json`:
 
 ```json
 {
@@ -52,13 +43,14 @@ local development alias in the application root:
             "versions": {"hachitechs/hideguard-php": "dev-master"}
         }
     }],
-    "require": {"hachitechs/hideguard-php": "dev-master as 1.0.0"}
+    "require": {"hachitechs/hideguard-php": "dev-master as 1.0.1"}
 }
 ```
 
 Adjust the path to your checkout and keep existing root repositories/requirements.
-The alias satisfies a module's `^1.0` constraint for local work; it does not create
-a release, include uncommitted files in a remote tag or prove remote availability.
+The alias satisfies a module's `^1.0` or `^1.0.1` constraint for local work; it does
+not create a release, include uncommitted files in a remote tag or prove remote
+availability.
 Do not use a development alias as a substitute for a production release.
 
 To work on this package itself, run `composer install` from its source checkout.
@@ -408,9 +400,8 @@ include MySQL tests. Otherwise those tests are explicitly skipped. Integration
 creates/drops only randomly named `hg_test_*` tables and tests real process
 concurrency; never point it at application guard table names.
 
-The workflow in `.github/workflows/tests.yml` configures PHP 8.1/8.2 and MySQL
+The workflow in `.github/workflows/tests.yml` configures PHP 8.1–8.5 and MySQL
 checks plus a separate Node 22 browser job when run in this package repository.
 It is not a workflow of a parent Magento checkout, and its presence is not evidence
-that a particular remote run passed. Local runtime verification has used PHP 8.5;
-production capacity, a full PHP-version matrix and real payment E2E are not inferred
-from those checks.
+that a particular remote run passed. Production capacity and real payment E2E
+are not inferred from those checks.
