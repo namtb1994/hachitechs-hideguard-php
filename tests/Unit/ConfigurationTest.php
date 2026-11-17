@@ -18,8 +18,15 @@ final class ConfigurationTest extends TestCase
     public function testDefaultsAndCustomBusinessPointDoNotRequireCommerceFramework(): void
     {
         self::assertSame(300, (new ProtectionPolicy())->passDuration);
-        self::assertSame('https://dev.hideguard.io', (new ProtectionPolicy())->endpointUrl);
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', accessPoints: ['document.download']);
+        self::assertSame('production', (new ProtectionPolicy())->environment);
+        self::assertSame('https://hideguard.io', (new ProtectionPolicy())->endpointUrl);
+        self::assertSame('https://hideguard.io', ProtectionPolicy::defaultEndpointUrl());
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            publicKey: 'key',
+            signaturePublicKey: 'signature',
+            accessPoints: ['document.download']
+        );
         self::assertTrue($policy->protects('document.download'));
         self::assertFalse($policy->protects('cart'));
         self::assertSame('user-uuid', (new AccessContext('tenant-uuid', 'browser', 'user-uuid'))->actorId);
@@ -27,7 +34,7 @@ final class ConfigurationTest extends TestCase
     }
 
     /** @dataProvider defaultOrigins */
-    public function testEnvironmentSelectsDefaultOrigin(string $environment, string $expected): void
+    public function testCompatibleEnvironmentsUseTheLiveDefaultOrigin(string $environment, string $expected): void
     {
         self::assertSame($expected, ProtectionPolicy::defaultEndpointUrl($environment));
         self::assertSame($expected, (new ProtectionPolicy(environment: $environment))->endpointUrl);
@@ -40,9 +47,9 @@ final class ConfigurationTest extends TestCase
     public static function defaultOrigins(): array
     {
         return [
-            ['development', 'https://dev.hideguard.io'],
+            ['development', 'https://hideguard.io'],
             ['production', 'https://hideguard.io'],
-            ['staging', 'https://dev.hideguard.io'], // Compatibility for existing non-Magento adapters.
+            ['staging', 'https://hideguard.io'],
         ];
     }
 
@@ -64,7 +71,7 @@ final class ConfigurationTest extends TestCase
         return [
             ['https://hideguard.io', 'https://hideguard.io'],
             [' HTTPS://HIDEGUARD.EXAMPLE:443/ ', 'https://hideguard.example'],
-            ['https://dev.hideguard.example:8443/', 'https://dev.hideguard.example:8443'],
+            ['https://custom.hideguard.example:8443/', 'https://custom.hideguard.example:8443'],
             ['https://127.0.0.1:8443', 'https://127.0.0.1:8443'],
             ['https://[::1]:8443/', 'https://[::1]:8443'],
         ];
@@ -96,7 +103,7 @@ final class ConfigurationTest extends TestCase
         $default = new ProtectionPolicy();
         self::assertSame(
             $default->fingerprint(),
-            (new ProtectionPolicy(endpointUrl: 'HTTPS://DEV.HIDEGUARD.IO:443/'))->fingerprint()
+            (new ProtectionPolicy(endpointUrl: 'HTTPS://HIDEGUARD.IO:443/'))->fingerprint()
         );
         self::assertNotSame(
             $default->fingerprint(),
@@ -117,6 +124,7 @@ final class ConfigurationTest extends TestCase
             [['environment' => 'unknown']], [['passDuration' => -1]], [['passDuration' => 120]],
             [['blockDuration' => 0]], [['enabled' => true]],
             [['enabled' => true, 'environment' => 'production', 'publicKey' => 'key']],
+            [['enabled' => true, 'publicKey' => 'key']],
             [['publicKey' => str_repeat('x', 1025)]], [['signaturePublicKey' => str_repeat('x', 4097)]],
             [['accessPoints' => ['bad/name']]], [['accessPoints' => [false]]],
             [['pageRules' => ["bad\0rule"]]], [['pageRules' => [str_repeat('x', 4097)]]],

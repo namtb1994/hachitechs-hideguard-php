@@ -100,6 +100,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
+            environment: 'development',
             publicKey: 'key',
             limits: new RateLimits(scopeRequests: 1000, identityRequests: 1000)
         );
@@ -147,7 +148,12 @@ abstract class GuardBehavior extends TestCase
         $this->guard = Guard::factory()->withStorage($this->storage)->withClock($this->clock)
             ->withVerifier(new DevelopmentVerifier())->make();
         $this->context = new AccessContext('site', 'browser');
-        $this->policy = new ProtectionPolicy(enabled: true, publicKey: 'site-key', accessPoints: ['custom_action']);
+        $this->policy = new ProtectionPolicy(
+            enabled: true,
+            environment: 'development',
+            publicKey: 'site-key',
+            accessPoints: ['custom_action']
+        );
     }
 
     public function testInspectHasNoMutationAndDisabledPolicyDoesNotAuthorize(): void
@@ -165,7 +171,12 @@ abstract class GuardBehavior extends TestCase
     /** @dataProvider intervals */
     public function testIntervalDeadlineAndRepeatedVerdictDoNotSlide(int $interval, int $lifetime): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', passDuration: $interval);
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            environment: 'development',
+            publicKey: 'key',
+            passDuration: $interval
+        );
         $grant = $this->report($this->guard, $this->context, $policy, $this->payload());
         self::assertSame(1000 + $lifetime, $grant->expiresAt);
         self::assertSame($interval, $grant->passDuration);
@@ -194,7 +205,12 @@ abstract class GuardBehavior extends TestCase
         $this->report($this->guard, $this->context, $this->policy, $this->payload());
         $actor = new AccessContext('site', 'browser', 'uuid-customer');
         self::assertSame('verification_required', $this->guard->inspect($actor, $this->policy)->status);
-        $different = new ProtectionPolicy(enabled: true, publicKey: 'key', accessPoints: ['other']);
+        $different = new ProtectionPolicy(
+            enabled: true,
+            environment: 'development',
+            publicKey: 'key',
+            accessPoints: ['other']
+        );
         self::assertSame('verification_required', $this->guard->inspect($this->context, $different)->status);
         $this->report($this->guard, $actor, $this->policy, $this->payload());
         self::assertSame('verification_required', $this->guard->inspect($this->context, $this->policy)->status);
@@ -269,7 +285,7 @@ abstract class GuardBehavior extends TestCase
         self::assertNull($this->storage->resource('site', $resource));
     }
 
-    public function testDefaultVerifierFailsClosedAndProductionCannotUseDevelopmentProof(): void
+    public function testDefaultVerifierFailsClosedAndDefaultPolicyCannotUseDevelopmentProof(): void
     {
         $default = Guard::factory()->withStorage($this->storage)->withClock($this->clock)->make();
         $this->assertFailure(
@@ -278,7 +294,6 @@ abstract class GuardBehavior extends TestCase
         );
         $production = new ProtectionPolicy(
             enabled: true,
-            environment: 'production',
             publicKey: 'key',
             signaturePublicKey: 'signature'
         );
@@ -431,6 +446,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
+            environment: 'development',
             publicKey: 'key',
             limits: new RateLimits(scopeRequests: 3, identityRequests: 2)
         );
@@ -450,7 +466,12 @@ abstract class GuardBehavior extends TestCase
 
     public function testActorLimitCannotBeBypassedByChangingBrowser(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', limits: new RateLimits(identityRequests: 1));
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            environment: 'development',
+            publicKey: 'key',
+            limits: new RateLimits(identityRequests: 1)
+        );
         $this->guard->preflight(new AccessContext('site', 'one', 'actor'), $policy);
         $this->assertFailure(
             FailureReason::RateLimited,
@@ -460,7 +481,12 @@ abstract class GuardBehavior extends TestCase
 
     public function testSessionCapacityDoesNotLimitExistingBrowserOrAnotherScope(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', limits: new RateLimits(sessionCapacity: 1));
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            environment: 'development',
+            publicKey: 'key',
+            limits: new RateLimits(sessionCapacity: 1)
+        );
         $this->guard->preflight($this->context, $policy);
         $this->guard->preflight($this->context, $policy);
         $this->assertFailure(
@@ -476,6 +502,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
+            environment: 'development',
             publicKey: 'key',
             limits: new RateLimits(sessionRetentionSeconds: 1)
         );
@@ -577,7 +604,7 @@ abstract class GuardBehavior extends TestCase
 
     public function testAlwaysRevokesPreviousGrantBeforeRenderingTheNextPage(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', passDuration: 0);
+        $policy = new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key', passDuration: 0);
         $first = $this->guard->preflight($this->context, $policy);
         $this->guard->report($this->context, $policy, $this->payload(), $first->verificationId);
         $resource = new ResourceRef('custom', 'operation');
@@ -644,6 +671,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
+            environment: 'development',
             publicKey: 'key',
             passDuration: 0,
             limits: new RateLimits(identityRequests: 2)

@@ -6,7 +6,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 
 test('SDK script and collection endpoint use the configured HTTPS origin', async () => {
     for (const [endpointUrl, expected] of [[undefined, 'https://hideguard.io'],
-        [' HTTPS://DEV.HIDEGUARD.EXAMPLE:443/ ', 'https://dev.hideguard.example'],
+        [' HTTPS://CUSTOM.HIDEGUARD.EXAMPLE:443/ ', 'https://custom.hideguard.example'],
         ['https://stage.hideguard.example:8443/', 'https://stage.hideguard.example:8443']]) {
         const app = browser({endpointUrl});
         await flush();

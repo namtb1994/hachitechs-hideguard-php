@@ -124,7 +124,7 @@ final class HighTrafficStorageTest extends TestCase
 
     public function testTwentyTransfersKeepUniqueBindingAndConsumedGrantCannotBeRestoredByOldOwner(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key');
+        $policy = new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key');
         $this->storage->run('concurrency', function () use ($policy): void {
             for ($i = 0; $i < 20; $i++) {
                 $this->storage->saveSession('concurrency', new BrowserState(

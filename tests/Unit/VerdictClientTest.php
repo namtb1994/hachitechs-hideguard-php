@@ -14,6 +14,27 @@ use PHPUnit\Framework\TestCase;
 
 final class VerdictClientTest extends TestCase
 {
+    public function testDefaultsToLiveApiWithOnlyAnApiKeyAndTransport(): void
+    {
+        $transport = $this->createMock(HttpTransport::class);
+        $transport->expects(self::once())->method('post')->with(
+            'https://hideguard.io/api/v1/verdict',
+            ['Accept' => 'application/json', 'Content-Type' => 'application/json', 'x-api-key' => 'secret-key'],
+            '{"visitorId":"visitor"}'
+        )->willReturn(new HttpResponse(200, '{"verdict":"allow"}'));
+
+        $client = new VerdictClient(apiKey: 'secret-key', transport: $transport);
+        self::assertSame(['verdict' => 'allow'], $client->getVerdict('visitor'));
+    }
+
+    public function testOmittedApiKeyIsRejectedBeforeMakingARequest(): void
+    {
+        $transport = $this->createMock(HttpTransport::class);
+        $transport->expects(self::never())->method('post');
+        $this->expectException(GuardException::class);
+        new VerdictClient(transport: $transport);
+    }
+
     public function testPostsVisitorAsJsonWithApiKeyAndReturnsCompleteNestedResponse(): void
     {
         $visitorId = 'a313d75f78dc6dabb6e5138cbf341fe4';
@@ -21,12 +42,12 @@ final class VerdictClientTest extends TestCase
             'reasons' => [['code' => 'test', 'detail' => ['score' => 0]]]];
         $transport = $this->createMock(HttpTransport::class);
         $transport->expects(self::once())->method('post')->with(
-            'https://dev.hideguard.io:8443/api/v1/verdict',
+            'https://hideguard.io:8443/api/v1/verdict',
             ['Accept' => 'application/json', 'Content-Type' => 'application/json', 'x-api-key' => 'secret-key'],
             '{"visitorId":"' . $visitorId . '"}'
         )->willReturn(new HttpResponse(200, json_encode($payload, JSON_THROW_ON_ERROR)));
 
-        $client = new VerdictClient(' HTTPS://DEV.HIDEGUARD.IO:8443/ ', 'secret-key', $transport);
+        $client = new VerdictClient(' HTTPS://HIDEGUARD.IO:8443/ ', 'secret-key', $transport);
         self::assertSame($payload, $client->getVerdict($visitorId));
     }
 

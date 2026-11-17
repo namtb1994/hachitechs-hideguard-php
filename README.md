@@ -17,7 +17,7 @@ Laravel middleware, WordPress plugins, or Symfony services.
 - **Bot verification API:** retrieve visitor verdicts through an authenticated
   server-side HTTP client.
 - **Signed verdict verification:** validate HideGuard collect v2 responses with
-  Ed25519 public keys, environment matching, and freshness checks.
+  Ed25519 public keys and freshness checks.
 - **Checkout and form protection:** bind access grants to resources selected by
   your application and check them before protected operations.
 - **Access lifecycle:** manage verification attempts, timed passes, blocks,
@@ -59,15 +59,13 @@ use Hachitechs\HideguardPhp\VerdictClient;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-$client = new VerdictClient(
-    baseUrl: 'https://hideguard.io',
-    apiKey: $apiKeyFromServerConfiguration
-);
+$client = new VerdictClient(apiKey: $apiKeyFromServerConfiguration);
 
 $response = $client->getVerdict($visitorId);
 ```
 
-The client sends `POST /api/v1/verdict` with an `x-api-key` header and a
+The client defaults to the live API at `https://hideguard.io` and sends
+`POST /api/v1/verdict` with an `x-api-key` header and a
 `{"visitorId":"..."}` JSON body. Successful JSON objects or lists are returned as
 PHP arrays, including nested data. Keep the API key on the server.
 
@@ -85,7 +83,6 @@ redirects or automatically retry requests. To customize timeouts:
 use Hachitechs\HideguardPhp\Http\CurlTransport;
 
 $client = new VerdictClient(
-    baseUrl: 'https://hideguard.io',
     apiKey: $apiKeyFromServerConfiguration,
     transport: new CurlTransport(timeoutSeconds: 15, connectTimeoutSeconds: 5)
 );
@@ -99,7 +96,7 @@ verifier and must not be used to trust browser-supplied payloads.
 ## Checkout and form access control
 
 Use `Guard` to manage verification attempts and persistent access grants.
-Configure an Ed25519 public key for your HideGuard site and environment, and
+Configure an Ed25519 public key for your HideGuard site and
 provide persistent storage. All classes use the `Hachitechs\HideguardPhp` namespace.
 
 ### 1. Configure the guard
@@ -126,7 +123,6 @@ $guard = Guard::factory()
 
 $policy = new ProtectionPolicy(
     enabled: true,
-    environment: 'production',
     publicKey: $sdkSiteKey,
     signaturePublicKey: $siteEd25519PemPublicKey
 );
@@ -202,22 +198,11 @@ and HTTP responses. A browser interaction lock complements these server checks;
 it cannot replace them. See the [plain PHP web example](examples/plain-php/web/README.md)
 for a complete request flow.
 
-## Environments and signature verification
-
-`ProtectionPolicy` selects the default endpoint from its environment:
-
-| Environment | Default endpoint |
-| --- | --- |
-| `development` | `https://dev.hideguard.io` |
-| `production` | `https://hideguard.io` |
-
-Use `ProtectionPolicy::defaultEndpointUrl($environment)` to share the same origin
-across your backend client and frontend configuration. An explicit HTTPS
-`endpointUrl` is also supported. `VerdictClient` always requires a `baseUrl`.
+## Signature verification
 
 `Ed25519Verifier` requires the Ed25519 PEM public key issued for the active site
-and environment. It validates signed fields, signature encoding, environment,
-and freshness. Configure it explicitly: the default `UnavailableVerifier` fails
+on HideGuard. It validates signed fields, signature encoding, and freshness.
+Configure it explicitly: the default `UnavailableVerifier` fails
 closed. `DevelopmentVerifier` accepts unsigned demo payloads and is for local
 development only.
 
@@ -275,7 +260,7 @@ Inject a PSR-20 clock or PSR-3 logger through `Guard::factory()->withClock()` or
 Prebuilt browser assets are in [`browser/dist`](browser/dist): ESM and AMD
 modules, LESS, and generated style exports. The runtime starts verification when
 needed and waits for a backend-confirmed result before unlocking interactions.
-Pass the policy's `endpointUrl` into the browser configuration.
+The browser runtime defaults to `https://hideguard.io`, matching the PHP SDK.
 
 The [web demo](examples/plain-php/web/README.md) demonstrates sessions, CSRF,
 protected pages, and resource grants. The [CLI demo](examples/plain-php/demo.php)

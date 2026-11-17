@@ -19,6 +19,11 @@ if (!$dsn) {
 $pdo = new PDO($dsn, (string)getenv('HG_MYSQL_USER'), (string)getenv('HG_MYSQL_PASSWORD'));
 $storage = new PdoMySqlStorage($pdo, (string)(getenv('HG_TABLE_PREFIX') ?: 'hideguard_'));
 $guard = Guard::factory()->withStorage($storage)->withVerifier(new DevelopmentVerifier())->make();
-$policy = new ProtectionPolicy(enabled: true, publicKey: 'development-demo', accessPoints: ['form.submit']);
+$policy = new ProtectionPolicy(
+    enabled: true,
+    environment: 'development',
+    publicKey: 'development-demo',
+    accessPoints: ['form.submit']
+);
 
 return ['guard' => $guard, 'policy' => $policy, 'storage' => $storage];

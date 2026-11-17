@@ -50,7 +50,11 @@ try {
         new PDO($dsn, (string)getenv('HG_MYSQL_USER'), (string)getenv('HG_MYSQL_PASSWORD')),
         (string)(getenv('HG_TABLE_PREFIX') ?: 'hideguard_')
     );
-    $policy = new ProtectionPolicy(enabled: true, publicKey: (string)(getenv('HG_SITE_KEY') ?: 'development-demo'));
+    $policy = new ProtectionPolicy(
+        enabled: true,
+        environment: 'development',
+        publicKey: (string)(getenv('HG_SITE_KEY') ?: 'development-demo')
+    );
     $guard = Guard::factory()->withStorage($storage)->withVerifier(new DevelopmentVerifier())->make();
     $context = new AccessContext('plain-web-demo', $_SESSION['browser']);
     $resource = new ResourceRef('submission', $_SESSION['browser']);
@@ -159,7 +163,7 @@ try {
 </section>
 <?php else : ?>
 <h1><?= $protected ? 'Protected example content' : 'Public example page' ?></h1>
-<p>This demo uses unsigned development verdicts. Use a real development site key for the SDK.</p>
+<p>This demo uses unsigned development verdicts. Use your HideGuard site key for live SDK calls.</p>
 <a href="/">Public page</a> <a href="/protected">Protected page</a>
 <form action="/submit" method="post">
     <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8') ?>">

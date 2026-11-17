@@ -29,12 +29,17 @@ try {
     } elseif ($mode === 'capacity') {
         $guard->preflight(
             new AccessContext('concurrency', 'worker-' . $id),
-            new ProtectionPolicy(enabled: true, publicKey: 'key', limits: new RateLimits(sessionCapacity: 2))
+            new ProtectionPolicy(
+                enabled: true,
+                environment: 'development',
+                publicKey: 'key',
+                limits: new RateLimits(sessionCapacity: 2)
+            )
         );
     } elseif ($mode === 'bind') {
         $guard->bindGrant(
             new AccessContext('concurrency', 'worker-' . $id),
-            new ProtectionPolicy(enabled: true, publicKey: 'key'),
+            new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key'),
             new ResourceRef('quote', '99')
         );
     } else {

@@ -53,6 +53,7 @@ final class GuardTest extends GuardBehavior
     {
         $policy = new \Hachitechs\HideguardPhp\Configuration\ProtectionPolicy(
             enabled: true,
+            environment: 'development',
             publicKey: 'key',
             limits: new \Hachitechs\HideguardPhp\Configuration\RateLimits(scopeRequests: 1000, identityRequests: 1000)
         );

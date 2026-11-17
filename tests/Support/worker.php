@@ -17,7 +17,7 @@ require dirname(__DIR__, 2) . '/vendor/autoload.php';
 $storage = new PdoMySqlStorage(MySqlFixture::connect(), $argv[1]);
 $guard = Guard::factory()->withStorage($storage)->withClock(new FrozenClock())
     ->withVerifier(new DevelopmentVerifier())->make();
-$policy = new ProtectionPolicy(enabled: true, publicKey: 'key');
+$policy = new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key');
 $mode = $argv[2];
 $context = new AccessContext('concurrency', $mode === 'rate' ? 'worker-' . $argv[3] : 'reports', 'shared');
 $attempt = $mode === 'rate' ? null : $guard->preflight($context, $policy);

@@ -1,8 +1,9 @@
 # Local PHP web demo
 
 Run `composer install` in the package directory. Supply `HG_MYSQL_DSN`,
-`HG_MYSQL_USER`, `HG_MYSQL_PASSWORD`, `HG_TABLE_PREFIX` and a real development
-`HG_SITE_KEY` in the environment. Initialize the dedicated example tables once:
+`HG_MYSQL_USER`, `HG_MYSQL_PASSWORD`, `HG_TABLE_PREFIX` and your HideGuard
+`HG_SITE_KEY` in the environment for live SDK calls.
+Initialize the dedicated example tables once:
 
 ```bash
 php examples/plain-php/init.php

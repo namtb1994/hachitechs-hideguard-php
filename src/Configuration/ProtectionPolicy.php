@@ -19,7 +19,8 @@ final class ProtectionPolicy
     public const DEFAULT_PASS_DURATION = 300;
     public const ALWAYS_GRANT_SECONDS = 300;
     public const DEFAULT_ENDPOINT_URL = 'https://hideguard.io';
-    public const TEST_ENDPOINT_URL = 'https://dev.hideguard.io';
+    /** @deprecated All environments use DEFAULT_ENDPOINT_URL unless explicitly overridden. */
+    public const TEST_ENDPOINT_URL = self::DEFAULT_ENDPOINT_URL;
 
     public readonly string $endpointUrl;
 
@@ -29,7 +30,7 @@ final class ProtectionPolicy
      */
     public function __construct(
         public readonly bool $enabled = false,
-        public readonly string $environment = 'development',
+        public readonly string $environment = 'production',
         public readonly string $publicKey = '',
         public readonly string $signaturePublicKey = '',
         public readonly array $accessPoints = [],
@@ -71,12 +72,11 @@ final class ProtectionPolicy
         }
     }
 
-    /** Framework-independent endpoint defaults; explicit HTTPS origins remain supported by the package. */
-    public static function defaultEndpointUrl(string $environment): string
+    /** Live endpoint by default; the environment is retained for signature compatibility. */
+    public static function defaultEndpointUrl(string $environment = 'production'): string
     {
         return match ($environment) {
-            'development', 'staging' => self::TEST_ENDPOINT_URL,
-            'production' => self::DEFAULT_ENDPOINT_URL,
+            'development', 'staging', 'production' => self::DEFAULT_ENDPOINT_URL,
             default => throw new GuardException(FailureReason::InvalidConfiguration, 'Invalid environment.'),
         };
     }

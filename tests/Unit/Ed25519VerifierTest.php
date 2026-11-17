@@ -62,11 +62,40 @@ final class Ed25519VerifierTest extends TestCase
         return array_map(fn(array $payload) => [$payload], self::vectors()['generated']['responses']);
     }
 
+    public function testDefaultPolicyAuthorizesASignedProductionVerdict(): void
+    {
+        $vectors = self::vectors()['generated'];
+        $payload = array_values(array_filter(
+            $vectors['responses'],
+            fn(array $response) => $response['environment'] === 'production' && $response['verdict'] === 'allow'
+        ))[0];
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            publicKey: 'site-key',
+            signaturePublicKey: $vectors['publicKey']
+        );
+        $clock = new FrozenClock(self::SIGNED_AT + 1);
+        $guard = Guard::factory()->withStorage(new MemoryStorage())->withClock($clock)
+            ->withVerifier(new Ed25519Verifier($clock))->make();
+        $context = new AccessContext('site', 'browser');
+        $pending = $guard->preflight($context, $policy);
+        $decision = $guard->report($context, $policy, $payload, $pending->verificationId);
+
+        self::assertSame('allowed', $decision->status);
+        self::assertSame('verified', $decision->verification);
+        self::assertSame('allowed', $guard->inspect($context, $policy)->status);
+    }
+
     public function testRealHideGuardVectorMatchesShopifyAndIgnoresUnsignedDisplayFields(): void
     {
         $vector = self::vectors()['real'];
         $vector['payload']['reasons'][0]['detail'] = 'Different display text';
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', signaturePublicKey: $vector['publicKey']);
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            environment: 'development',
+            publicKey: 'key',
+            signaturePublicKey: $vector['publicKey']
+        );
         $result = (new Ed25519Verifier(new FrozenClock(self::SIGNED_AT + 1)))
             ->verify($vector['payload'], new AccessContext('site', 'browser'), $policy);
         self::assertSame('allow', $result->verdict);

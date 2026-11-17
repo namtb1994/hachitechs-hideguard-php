@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hachitechs\HideguardPhp;
 
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Contracts\HttpTransport;
 use Hachitechs\HideguardPhp\Exceptions\ApiException;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
@@ -16,8 +17,8 @@ final class VerdictClient
     private readonly string $url;
 
     public function __construct(
-        string $baseUrl,
-        private readonly string $apiKey,
+        string $baseUrl = ProtectionPolicy::DEFAULT_ENDPOINT_URL,
+        private readonly string $apiKey = '',
         private readonly HttpTransport $transport = new CurlTransport(),
         private readonly int $maxResponseBytes = CurlTransport::DEFAULT_MAX_RESPONSE_BYTES
     ) {

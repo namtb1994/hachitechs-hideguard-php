@@ -3,15 +3,21 @@
 This changelog starts with **1.0.0**, the first stable distribution of
 `hachitechs/hideguard-php`.
 
+## Unreleased
+
+- Default PHP policies and verdict requests to the live API at `https://hideguard.io`.
+- Require signed production verification by default; local unsigned demos now opt
+  into their verification mode explicitly.
+- Remove environment selection and obsolete endpoint instructions from the README.
+
 ## 1.0.0
 
 ### Included
 
 - Framework-independent PHP 8.1+ access-control core with typed policies, contexts,
   decisions, server-owned verification attempts, grants, blocks and resource binding.
-- Testing (`development`) and Production modes, defaulting to
-  `https://dev.hideguard.io` and `https://hideguard.io`. Explicit HTTPS endpoint
-  overrides and legacy staging construction remain available to PHP adapters.
+- Environment-aware policies with explicit HTTPS endpoint overrides and legacy
+  staging construction for PHP adapters.
 - Standalone authenticated `VerdictClient` for `POST /api/v1/verdict`, injectable
   HTTP transport, bounded responses, TLS verification and explicit API errors.
 - Ed25519 collect-v2 verification with canonical signed fields, trusted public keys,
