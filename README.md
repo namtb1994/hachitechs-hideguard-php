@@ -1,7 +1,12 @@
-# hachitechs/hideguard-php
+# HideGuard PHP SDK
 
-Framework-independent access protection for PHP **8.1+**. Production dependencies
-are only PHP, `psr/clock` and `psr/log`. No Magento, Laravel, WordPress, Symfony,
+PHP SDK for [HideGuard](https://hideguard.io/) bot protection,
+signed verdict verification, and checkout access control.
+Framework-independent and compatible with PHP **8.1+**,
+with Ed25519 signature verification support.
+
+Production dependencies are only PHP, `psr/clock` and `psr/log`.
+No Magento, Laravel, WordPress, Symfony,
 container, framework HTTP client or ORM is required. Optional supplied adapters
 use cURL, Sodium or PDO MySQL as described below.
 

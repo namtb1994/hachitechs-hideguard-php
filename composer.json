@@ -1,6 +1,15 @@
 {
     "name": "hachitechs/hideguard-php",
-    "description": "Framework independent HideGuard access protection for PHP",
+    "description": "PHP SDK for HideGuard bot protection, signed verdict verification, and checkout access control.",
+    "keywords": [
+        "hideguard",
+        "bot-protection",
+        "bot-verification",
+        "checkout-protection",
+        "access-control",
+        "ed25519",
+        "php"
+    ],
     "type": "library",
     "license": "proprietary",
     "require": {
