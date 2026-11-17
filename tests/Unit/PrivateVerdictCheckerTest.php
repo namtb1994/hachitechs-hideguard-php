@@ -41,7 +41,6 @@ final class PrivateVerdictCheckerTest extends TestCase
         $context = new AccessContext('scope', 'browser');
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'production',
             publicKey: 'key',
             signaturePublicKey: 'key'
         );

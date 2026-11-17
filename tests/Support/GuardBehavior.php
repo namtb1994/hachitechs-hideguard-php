@@ -17,7 +17,6 @@ use Hachitechs\HideguardPhp\Contracts\VerdictVerifier;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\HideguardPhp\Guard;
-use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
 use Hachitechs\HideguardPhp\Verification\VerifiedVerdict;
 use PHPUnit\Framework\TestCase;
 
@@ -100,7 +99,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             limits: new RateLimits(scopeRequests: 1000, identityRequests: 1000)
         );
@@ -146,11 +145,11 @@ abstract class GuardBehavior extends TestCase
         $this->storage = $this->createStorage();
         $this->clock = new FrozenClock();
         $this->guard = Guard::factory()->withStorage($this->storage)->withClock($this->clock)
-            ->withVerifier(new DevelopmentVerifier())->make();
+            ->withVerifier(new FixtureVerdictVerifier())->make();
         $this->context = new AccessContext('site', 'browser');
         $this->policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'site-key',
             accessPoints: ['custom_action']
         );
@@ -173,7 +172,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             passDuration: $interval
         );
@@ -207,7 +206,7 @@ abstract class GuardBehavior extends TestCase
         self::assertSame('verification_required', $this->guard->inspect($actor, $this->policy)->status);
         $different = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             accessPoints: ['other']
         );
@@ -285,7 +284,7 @@ abstract class GuardBehavior extends TestCase
         self::assertNull($this->storage->resource('site', $resource));
     }
 
-    public function testDefaultVerifierFailsClosedAndDefaultPolicyCannotUseDevelopmentProof(): void
+    public function testDefaultVerifierFailsClosedAndUnverifiedProofCannotAuthorize(): void
     {
         $default = Guard::factory()->withStorage($this->storage)->withClock($this->clock)->make();
         $this->assertFailure(
@@ -297,9 +296,17 @@ abstract class GuardBehavior extends TestCase
             publicKey: 'key',
             signaturePublicKey: 'signature'
         );
+        $unverified = new class implements VerdictVerifier {
+            public function verify(array $payload, AccessContext $context, ProtectionPolicy $policy): VerifiedVerdict
+            {
+                return new VerifiedVerdict($payload['verdict'], $payload['visitorId'], false);
+            }
+        };
+        $guard = Guard::factory()->withStorage($this->storage)->withClock($this->clock)
+            ->withVerifier($unverified)->make();
         $this->assertFailure(
-            FailureReason::VerificationUnavailable,
-            fn() => $this->report($this->guard, $this->context, $production, $this->payload())
+            FailureReason::InvalidVerdict,
+            fn() => $this->report($guard, $this->context, $production, $this->payload())
         );
         $state = new BrowserState(
             'browser',
@@ -325,7 +332,6 @@ abstract class GuardBehavior extends TestCase
             ->withVerifier($verifier)->make();
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'production',
             publicKey: 'key',
             signaturePublicKey: 'signature'
         );
@@ -446,7 +452,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             limits: new RateLimits(scopeRequests: 3, identityRequests: 2)
         );
@@ -468,7 +474,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             limits: new RateLimits(identityRequests: 1)
         );
@@ -483,7 +489,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             limits: new RateLimits(sessionCapacity: 1)
         );
@@ -502,7 +508,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             limits: new RateLimits(sessionRetentionSeconds: 1)
         );
@@ -527,7 +533,7 @@ abstract class GuardBehavior extends TestCase
             public function verify(array $payload, AccessContext $context, ProtectionPolicy $policy): VerifiedVerdict
             {
                 $this->calls++;
-                return (new DevelopmentVerifier())->verify($payload, $context, $policy);
+                return (new FixtureVerdictVerifier())->verify($payload, $context, $policy);
             }
         };
         $guard = Guard::factory()->withStorage($this->storage)->withClock($this->clock)
@@ -546,7 +552,7 @@ abstract class GuardBehavior extends TestCase
         $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
         $logger->expects(self::once())->method('notice')->willThrowException(new \RuntimeException('Logging failed.'));
         $guard = Guard::factory()->withStorage($this->storage)->withClock($this->clock)
-            ->withVerifier(new DevelopmentVerifier())->withLogger($logger)->make();
+            ->withVerifier(new FixtureVerdictVerifier())->withLogger($logger)->make();
         $this->report($guard, $this->context, $this->policy, $this->payload());
         $this->assertFailure(
             FailureReason::InvalidVerdict,
@@ -604,7 +610,12 @@ abstract class GuardBehavior extends TestCase
 
     public function testAlwaysRevokesPreviousGrantBeforeRenderingTheNextPage(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key', passDuration: 0);
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            publicKey: 'key',
+            signaturePublicKey: 'fixture-key',
+            passDuration: 0
+        );
         $first = $this->guard->preflight($this->context, $policy);
         $this->guard->report($this->context, $policy, $this->payload(), $first->verificationId);
         $resource = new ResourceRef('custom', 'operation');
@@ -671,7 +682,7 @@ abstract class GuardBehavior extends TestCase
     {
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
+            signaturePublicKey: 'fixture-key',
             publicKey: 'key',
             passDuration: 0,
             limits: new RateLimits(identityRequests: 2)

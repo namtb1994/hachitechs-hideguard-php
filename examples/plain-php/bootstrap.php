@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Guard;
 use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
-use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Verification\Ed25519Verifier;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
@@ -18,11 +18,11 @@ if (!$dsn) {
 }
 $pdo = new PDO($dsn, (string)getenv('HG_MYSQL_USER'), (string)getenv('HG_MYSQL_PASSWORD'));
 $storage = new PdoMySqlStorage($pdo, (string)(getenv('HG_TABLE_PREFIX') ?: 'hideguard_'));
-$guard = Guard::factory()->withStorage($storage)->withVerifier(new DevelopmentVerifier())->make();
+$guard = Guard::factory()->withStorage($storage)->withVerifier(new Ed25519Verifier())->make();
 $policy = new ProtectionPolicy(
     enabled: true,
-    environment: 'development',
-    publicKey: 'development-demo',
+    publicKey: (string)getenv('HG_SITE_KEY'),
+    signaturePublicKey: (string)getenv('HG_SIGNATURE_PUBLIC_KEY'),
     accessPoints: ['form.submit']
 );
 

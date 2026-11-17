@@ -7,6 +7,9 @@ use Hachitechs\HideguardPhp\Access\ResourceRef;
 use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Guard;
 
+if ($argc !== 2) {
+    throw new InvalidArgumentException('Usage: php examples/plain-php/demo.php signed-verdict.json');
+}
 $app = require __DIR__ . '/bootstrap.php';
 /** @var Guard $guard */
 $guard = $app['guard'];
@@ -20,12 +23,16 @@ if ($decision->status === 'blocked') {
     echo json_encode($decision->toBrowserArray(), JSON_THROW_ON_ERROR) . "\n";
     return;
 }
-if ($decision->status !== 'allowed' || in_array('--block', $argv, true)) {
-    // Simulates an SDK payload only in development; no real HideGuard verification is claimed.
-    $decision = $guard->report($context, $policy, [
-        'verdict' => in_array('--block', $argv, true) ? 'block' : 'allow',
-        'visitorId' => 'demo_visitor',
-    ], $decision->verificationId);
+if ($decision->status !== 'allowed') {
+    $json = file_get_contents($argv[1], false, null, 0, 65537);
+    if ($json === false || strlen($json) > 65536) {
+        throw new InvalidArgumentException('Supply a signed verdict JSON file of at most 64 KiB.');
+    }
+    $payload = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+    if (!is_array($payload)) {
+        throw new InvalidArgumentException('The signed verdict must be a JSON object.');
+    }
+    $decision = $guard->report($context, $policy, $payload, $decision->verificationId);
 }
 if ($decision->status === 'allowed') {
     $guard->bindGrant($context, $policy, $resource);

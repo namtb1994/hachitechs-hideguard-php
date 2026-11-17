@@ -8,7 +8,7 @@ use Hachitechs\HideguardPhp\Tests\Support\GuardBehavior;
 use Hachitechs\HideguardPhp\Tests\Support\UsesMySql;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
 use Hachitechs\HideguardPhp\Guard;
-use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Tests\Support\FixtureVerdictVerifier;
 
 final class MySqlGuardTest extends GuardBehavior
 {
@@ -24,7 +24,7 @@ final class MySqlGuardTest extends GuardBehavior
             $this->databaseFixture->pdo->rollBack();
         });
         $guard = Guard::factory()->withStorage($this->storage)->withClock($this->clock)
-            ->withVerifier(new DevelopmentVerifier())->withLogger($logger)->make();
+            ->withVerifier(new FixtureVerdictVerifier())->withLogger($logger)->make();
         $this->report($guard, $this->context, $this->policy, $this->payload());
         $this->assertFailure(
             FailureReason::InvalidVerdict,

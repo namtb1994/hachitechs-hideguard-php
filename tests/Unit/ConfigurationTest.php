@@ -18,7 +18,6 @@ final class ConfigurationTest extends TestCase
     public function testDefaultsAndCustomBusinessPointDoNotRequireCommerceFramework(): void
     {
         self::assertSame(300, (new ProtectionPolicy())->passDuration);
-        self::assertSame('production', (new ProtectionPolicy())->environment);
         self::assertSame('https://hideguard.io', (new ProtectionPolicy())->endpointUrl);
         self::assertSame('https://hideguard.io', ProtectionPolicy::defaultEndpointUrl());
         $policy = new ProtectionPolicy(
@@ -33,31 +32,19 @@ final class ConfigurationTest extends TestCase
         self::assertNull((new AccessContext('tenant', 'browser'))->actorId);
     }
 
-    /** @dataProvider defaultOrigins */
-    public function testCompatibleEnvironmentsUseTheLiveDefaultOrigin(string $environment, string $expected): void
+    public function testLiveDefaultAndExplicitOriginOverride(): void
     {
-        self::assertSame($expected, ProtectionPolicy::defaultEndpointUrl($environment));
-        self::assertSame($expected, (new ProtectionPolicy(environment: $environment))->endpointUrl);
         self::assertSame('https://custom.example', (new ProtectionPolicy(
-            environment: $environment,
             endpointUrl: 'https://custom.example/'
         ))->endpointUrl);
     }
 
-    public static function defaultOrigins(): array
+    public function testEnvironmentIsNotAConfigurationOption(): void
     {
-        return [
-            ['development', 'https://hideguard.io'],
-            ['production', 'https://hideguard.io'],
-            ['staging', 'https://hideguard.io'],
-        ];
-    }
-
-    public function testOnlyTwoModesAreOfferedAndUnknownDefaultEnvironmentFails(): void
-    {
-        self::assertSame(['development', 'production'], ProtectionPolicy::ENVIRONMENTS);
-        $this->expectException(GuardException::class);
-        ProtectionPolicy::defaultEndpointUrl('unknown');
+        $arguments = ['environment' => 'production'];
+        $this->expectException(\Error::class);
+        $this->expectExceptionMessage('Unknown named parameter $environment');
+        new ProtectionPolicy(...$arguments);
     }
 
     /** @dataProvider endpointUrls */
@@ -121,9 +108,8 @@ final class ConfigurationTest extends TestCase
     public static function invalidPolicies(): array
     {
         return [
-            [['environment' => 'unknown']], [['passDuration' => -1]], [['passDuration' => 120]],
+            [['passDuration' => -1]], [['passDuration' => 120]],
             [['blockDuration' => 0]], [['enabled' => true]],
-            [['enabled' => true, 'environment' => 'production', 'publicKey' => 'key']],
             [['enabled' => true, 'publicKey' => 'key']],
             [['publicKey' => str_repeat('x', 1025)]], [['signaturePublicKey' => str_repeat('x', 4097)]],
             [['accessPoints' => ['bad/name']]], [['accessPoints' => [false]]],
@@ -146,7 +132,7 @@ final class ConfigurationTest extends TestCase
 
     public function testDisabledDraftsAndPolicyFingerprintHaveStableSemantics(): void
     {
-        $draft = new ProtectionPolicy(environment: 'production');
+        $draft = new ProtectionPolicy();
         self::assertFalse($draft->enabled);
         $one = new ProtectionPolicy(accessPoints: ['a', 'b'], pageRules: ['path/*', 'another']);
         $two = new ProtectionPolicy(accessPoints: ['b', 'a'], pageRules: ['another', 'path/*']);

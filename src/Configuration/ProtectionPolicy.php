@@ -11,16 +11,11 @@ use Hachitechs\HideguardPhp\Support\EndpointUrl;
 
 final class ProtectionPolicy
 {
-    public const ENVIRONMENTS = ['development', 'production'];
-    // Accepted for existing framework adapters; new configuration exposes only two modes.
-    private const LEGACY_ENVIRONMENTS = ['staging'];
     public const BLOCK_DURATIONS = [900, 3600, 21600, 86400];
     public const PASS_DURATIONS = [0, 60, 300, 900, 3600];
     public const DEFAULT_PASS_DURATION = 300;
     public const ALWAYS_GRANT_SECONDS = 300;
     public const DEFAULT_ENDPOINT_URL = 'https://hideguard.io';
-    /** @deprecated All environments use DEFAULT_ENDPOINT_URL unless explicitly overridden. */
-    public const TEST_ENDPOINT_URL = self::DEFAULT_ENDPOINT_URL;
 
     public readonly string $endpointUrl;
 
@@ -30,7 +25,6 @@ final class ProtectionPolicy
      */
     public function __construct(
         public readonly bool $enabled = false,
-        public readonly string $environment = 'production',
         public readonly string $publicKey = '',
         public readonly string $signaturePublicKey = '',
         public readonly array $accessPoints = [],
@@ -41,15 +35,14 @@ final class ProtectionPolicy
         ?string $endpointUrl = null,
         public readonly int $verificationTimeout = 35
     ) {
-        $this->endpointUrl = EndpointUrl::normalize($endpointUrl ?? self::defaultEndpointUrl($environment));
+        $this->endpointUrl = EndpointUrl::normalize($endpointUrl ?? self::DEFAULT_ENDPOINT_URL);
         if (
-            !in_array($environment, [...self::ENVIRONMENTS, ...self::LEGACY_ENVIRONMENTS], true)
-            || !in_array($blockDuration, self::BLOCK_DURATIONS, true)
+            !in_array($blockDuration, self::BLOCK_DURATIONS, true)
             || !in_array($passDuration, self::PASS_DURATIONS, true)
             || $verificationTimeout < 5 || $verificationTimeout > 120
             || strlen($publicKey) > 1024 || strlen($signaturePublicKey) > 4096
         ) {
-            throw new GuardException(FailureReason::InvalidConfiguration, 'Invalid environment, key or duration.');
+            throw new GuardException(FailureReason::InvalidConfiguration, 'Invalid key or duration.');
         }
         foreach ($accessPoints as $point) {
             if (!is_string($point) || !preg_match('/^[a-zA-Z0-9_.:-]{1,128}$/D', $point)) {
@@ -65,20 +58,18 @@ final class ProtectionPolicy
             throw new GuardException(FailureReason::InvalidConfiguration, 'Use at most 50 rules and 4096 bytes.');
         }
         if (
-            $enabled && (trim($publicKey) === ''
-            || ($environment !== 'development' && trim($signaturePublicKey) === ''))
+            $enabled && (trim($publicKey) === '' || trim($signaturePublicKey) === '')
         ) {
-            throw new GuardException(FailureReason::InvalidConfiguration, 'The active environment requires keys.');
+            throw new GuardException(
+                FailureReason::InvalidConfiguration,
+                'Protection requires site and signature keys.'
+            );
         }
     }
 
-    /** Live endpoint by default; the environment is retained for signature compatibility. */
-    public static function defaultEndpointUrl(string $environment = 'production'): string
+    public static function defaultEndpointUrl(): string
     {
-        return match ($environment) {
-            'development', 'staging', 'production' => self::DEFAULT_ENDPOINT_URL,
-            default => throw new GuardException(FailureReason::InvalidConfiguration, 'Invalid environment.'),
-        };
+        return self::DEFAULT_ENDPOINT_URL;
     }
 
     public function protects(string $point): bool
@@ -97,13 +88,13 @@ final class ProtectionPolicy
         $settings = get_object_vars($this);
         sort($settings['accessPoints']);
         sort($settings['pageRules']);
-        return hash('sha256', 'hideguard-policy-v4:' . json_encode($settings, JSON_THROW_ON_ERROR));
+        return hash('sha256', 'hideguard-policy-v5:' . json_encode($settings, JSON_THROW_ON_ERROR));
     }
 
     public function grants(BrowserState $state, ?string $actorId, int $now): bool
     {
         return $this->enabled && $state->actorId === $actorId && $state->grantedUntil > $now
-            && ($this->environment === 'development' || $state->verification === 'verified')
+            && $state->verification === 'verified'
             && $state->policyHash !== null && hash_equals($this->fingerprint(), $state->policyHash);
     }
 }

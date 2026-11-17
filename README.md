@@ -202,9 +202,8 @@ for a complete request flow.
 
 `Ed25519Verifier` requires the Ed25519 PEM public key issued for the active site
 on HideGuard. It validates signed fields, signature encoding, and freshness.
-Configure it explicitly: the default `UnavailableVerifier` fails
-closed. `DevelopmentVerifier` accepts unsigned demo payloads and is for local
-development only.
+Configure it explicitly: the default `UnavailableVerifier` fails closed.
+The SDK requires verified verdicts and provides no unsigned verification mode.
 
 Verification attempt IDs correlate callbacks; they are not included in the
 HideGuard signature. Signed responses and expiry checks do not provide
@@ -264,16 +263,17 @@ The browser runtime defaults to `https://hideguard.io`, matching the PHP SDK.
 
 The [web demo](examples/plain-php/web/README.md) demonstrates sessions, CSRF,
 protected pages, and resource grants. The [CLI demo](examples/plain-php/demo.php)
-demonstrates persistent access decisions. Both use `DevelopmentVerifier` and
-must be adapted to use Ed25519 verification for production.
+demonstrates persistent access decisions from a signed verdict JSON file.
+Both examples use `Ed25519Verifier` with your site's signature public key.
 
-For the CLI demo, set `HG_MYSQL_DSN`, `HG_MYSQL_USER`, `HG_MYSQL_PASSWORD`, and
-optionally `HG_TABLE_PREFIX`, using a dedicated demo database:
+For the CLI demo, set `HG_MYSQL_DSN`, `HG_MYSQL_USER`, `HG_MYSQL_PASSWORD`,
+`HG_SITE_KEY`, `HG_SIGNATURE_PUBLIC_KEY` (Ed25519 PEM), and optionally
+`HG_TABLE_PREFIX`, using a dedicated demo database. Supply a fresh signed SDK
+response saved as `signed-verdict.json`:
 
 ```sh
 php examples/plain-php/init.php
-php examples/plain-php/demo.php
-php examples/plain-php/demo.php --block
+php examples/plain-php/demo.php signed-verdict.json
 ```
 
 ## Development and testing

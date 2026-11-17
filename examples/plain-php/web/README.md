@@ -1,8 +1,9 @@
 # Local PHP web demo
 
 Run `composer install` in the package directory. Supply `HG_MYSQL_DSN`,
-`HG_MYSQL_USER`, `HG_MYSQL_PASSWORD`, `HG_TABLE_PREFIX` and your HideGuard
-`HG_SITE_KEY` in the environment for live SDK calls.
+`HG_MYSQL_USER`, `HG_MYSQL_PASSWORD`, `HG_TABLE_PREFIX`, your HideGuard
+`HG_SITE_KEY`, and `HG_SIGNATURE_PUBLIC_KEY` (the site's Ed25519 PEM public key)
+in the process environment. The SDK uses `https://hideguard.io` by default.
 Initialize the dedicated example tables once:
 
 ```bash
@@ -20,8 +21,8 @@ Native PHP sessions own browser identity and a CSRF token. The browser loads
 prebuilt ESM/style exports; it needs no framework, jQuery, Node or LESS compiler
 at runtime. MySQL schema setup is explicit and never runs in the router.
 
-This example is restricted to the local PHP development server. It deliberately
-uses `DevelopmentVerifier`; unsigned payloads can be forged and are unsuitable
-for production protection. Automated HTTP checks simulate those development
-payloads; live SDK checks need your real site key. Use the application's native
-HTTP/session/cache/security integration when adapting this flow to a project.
+This example is restricted to the local PHP server. It uses `Ed25519Verifier`
+and requires `ext-sodium`; unsigned or tampered verdicts are rejected.
+Automated HTTP checks sign test payloads with a test-only key pair. Live SDK
+checks use your HideGuard site key and signature public key. Use the application's
+native HTTP/session/cache/security integration when adapting this flow to a project.

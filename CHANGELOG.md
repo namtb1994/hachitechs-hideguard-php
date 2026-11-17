@@ -6,9 +6,20 @@ This changelog starts with **1.0.0**, the first stable distribution of
 ## Unreleased
 
 - Default PHP policies and verdict requests to the live API at `https://hideguard.io`.
-- Require signed production verification by default; local unsigned demos now opt
-  into their verification mode explicitly.
+- Remove environment configuration, endpoint mode constants, and unsigned
+  `DevelopmentVerifier`. Enabled policies require site and signature public keys.
+- Verify signatures without selecting or matching a configured environment.
+  All fields included in the signed message remain covered by verification.
+- Update CLI and web examples to use Ed25519-signed verdicts.
 - Remove environment selection and obsolete endpoint instructions from the README.
+
+### Migration
+
+- Remove the `environment` constructor argument and uses of `ENVIRONMENTS` or
+  `TEST_ENDPOINT_URL`. Review positional `ProtectionPolicy` arguments after removing
+  its former second parameter; named arguments are preferred.
+- Replace `DevelopmentVerifier` with `Ed25519Verifier` and provide your site's
+  signature public key. Existing grants must be verified again under the new policy.
 
 ## 1.0.0
 
@@ -16,8 +27,7 @@ This changelog starts with **1.0.0**, the first stable distribution of
 
 - Framework-independent PHP 8.1+ access-control core with typed policies, contexts,
   decisions, server-owned verification attempts, grants, blocks and resource binding.
-- Environment-aware policies with explicit HTTPS endpoint overrides and legacy
-  staging construction for PHP adapters.
+- Configurable policies with explicit HTTPS endpoint overrides for PHP adapters.
 - Standalone authenticated `VerdictClient` for `POST /api/v1/verdict`, injectable
   HTTP transport, bounded responses, TLS verification and explicit API errors.
 - Ed25519 collect-v2 verification with canonical signed fields, trusted public keys,
@@ -48,5 +58,3 @@ This changelog starts with **1.0.0**, the first stable distribution of
 - Browser verification still needs the application's identity, CSRF, routing and
   server-side authorization integration. Verification IDs do not add signed
   browser/resource nonce binding or complete replay prevention.
-- The CLI/web demos use an explicit development verifier and are not production
-  signature-verification configurations.

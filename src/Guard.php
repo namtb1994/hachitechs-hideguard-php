@@ -159,10 +159,7 @@ final class Guard implements GuardContract, BatchGuardContract
                 try {
                     $verdict = $this->verifier->verify($payload, $context, $policy);
                     $verdictGroup = VerdictPolicy::groupFor($verdict->verdict);
-                    if (
-                        $policy->environment !== 'development'
-                        && !$verdict->verified
-                    ) {
+                    if (!$verdict->verified) {
                         throw new GuardException(
                             FailureReason::InvalidVerdict,
                             'A verified verdict is required.'
@@ -201,7 +198,7 @@ final class Guard implements GuardContract, BatchGuardContract
                 $state->blockedUntil = 0;
                 $state->grantedUntil = $until;
                 $state->policyHash = $policy->fingerprint();
-                $state->verification = $verdict->verified ? 'verified' : 'unverified_test_mode';
+                $state->verification = 'verified';
                 $state->resource = null;
                 $state->verificationUntil = 0;
                 $this->storage->saveSession($context->scopeId, $state);

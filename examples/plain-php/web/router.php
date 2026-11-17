@@ -10,7 +10,7 @@ use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\HideguardPhp\Guard;
 use Hachitechs\HideguardPhp\Rules\PathMatcher;
 use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
-use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
+use Hachitechs\HideguardPhp\Verification\Ed25519Verifier;
 
 // This example owns HTTP, sessions, CSRF and routing. None of these belong to core.
 if (PHP_SAPI !== 'cli-server') {
@@ -52,10 +52,10 @@ try {
     );
     $policy = new ProtectionPolicy(
         enabled: true,
-        environment: 'development',
-        publicKey: (string)(getenv('HG_SITE_KEY') ?: 'development-demo')
+        publicKey: (string)getenv('HG_SITE_KEY'),
+        signaturePublicKey: (string)getenv('HG_SIGNATURE_PUBLIC_KEY')
     );
-    $guard = Guard::factory()->withStorage($storage)->withVerifier(new DevelopmentVerifier())->make();
+    $guard = Guard::factory()->withStorage($storage)->withVerifier(new Ed25519Verifier())->make();
     $context = new AccessContext('plain-web-demo', $_SESSION['browser']);
     $resource = new ResourceRef('submission', $_SESSION['browser']);
     $isEndpoint = in_array($path, ['/access', '/verdict', '/fail', '/submit'], true);
@@ -163,7 +163,7 @@ try {
 </section>
 <?php else : ?>
 <h1><?= $protected ? 'Protected example content' : 'Public example page' ?></h1>
-<p>This demo uses unsigned development verdicts. Use your HideGuard site key for live SDK calls.</p>
+<p>This demo verifies signed HideGuard verdicts with your site's Ed25519 public key.</p>
 <a href="/">Public page</a> <a href="/protected">Protected page</a>
 <form action="/submit" method="post">
     <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8') ?>">

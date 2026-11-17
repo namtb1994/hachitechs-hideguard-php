@@ -49,7 +49,7 @@ final class MySqlStorageTest extends StorageBehavior
         $guard = Guard::factory()->withStorage($this->storage)->withClock(new FrozenClock())->make();
         $decision = $guard->inspect(
             new AccessContext('concurrency', 'reports'),
-            new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key')
+            new ProtectionPolicy(enabled: true, signaturePublicKey: 'fixture-key', publicKey: 'key')
         );
         self::assertSame('blocked', $decision->status);
         self::assertSame(4600, $decision->expiresAt);

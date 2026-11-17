@@ -36,15 +36,14 @@ final class Ed25519Verifier implements VerdictVerifier
         if (!is_string($payload['signature'] ?? null) || !preg_match(self::HEADER, $payload['signature'], $header)) {
             throw new GuardException(FailureReason::InvalidVerdict, 'Invalid HideGuard signature header.');
         }
-        foreach (['siteId', 'requestId', 'visitorId'] as $field) {
+        foreach (['siteId', 'requestId', 'visitorId', 'environment'] as $field) {
             if (!self::token($payload[$field] ?? null)) {
                 throw new GuardException(FailureReason::InvalidVerdict, 'Invalid HideGuard signed identity.');
             }
         }
         $group = VerdictPolicy::groupFor($payload['verdict'] ?? null);
         if (
-            ($payload['environment'] ?? null) !== $policy->environment
-            || $group === null
+            $group === null
             || !is_int($payload['score'] ?? null) || $payload['score'] < 0 || $payload['score'] > 9007199254740991
         ) {
             throw new GuardException(FailureReason::InvalidVerdict, 'Invalid HideGuard signed response fields.');

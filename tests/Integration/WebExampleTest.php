@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Hachitechs\HideguardPhp\Tests\Integration;
 
 use Hachitechs\HideguardPhp\Tests\Support\UsesMySql;
+use Hachitechs\HideguardPhp\Tests\Support\SignedVerdictFixture;
 use PHPUnit\Framework\TestCase;
 
 final class WebExampleTest extends TestCase
@@ -32,7 +33,8 @@ final class WebExampleTest extends TestCase
             'HG_MYSQL_USER' => getenv('HG_TEST_MYSQL_USER'),
             'HG_MYSQL_PASSWORD' => getenv('HG_TEST_MYSQL_PASSWORD'),
             'HG_TABLE_PREFIX' => $this->databaseFixture->prefix,
-            'HG_SITE_KEY' => 'test-development-key',
+            'HG_SITE_KEY' => 'test-site-key',
+            'HG_SIGNATURE_PUBLIC_KEY' => SignedVerdictFixture::publicKey(),
         ]);
         $this->server = proc_open(
             [PHP_BINARY, '-S', $address, 'examples/plain-php/web/router.php'],
@@ -76,8 +78,14 @@ final class WebExampleTest extends TestCase
         $verificationId = $match[1];
         self::assertSame(400, $this->request('/submit', ['csrf' => 'invalid'])[0]);
         self::assertSame(403, $this->request('/submit', ['csrf' => $csrf])[0]);
-        [$code, $body] = $this->request('/verdict', [
+        self::assertSame(400, $this->request('/verdict', [
             'csrf' => $csrf, 'verificationId' => $verificationId, 'verdict' => 'allow', 'visitorId' => 'web-visitor',
+        ])[0]);
+        [, $body] = $this->request('/access', ['csrf' => $csrf, 'retry' => '1']);
+        $verificationId = json_decode($body, true)['verificationId'];
+        [$code, $body] = $this->request('/verdict', [
+            'csrf' => $csrf, 'verificationId' => $verificationId,
+            'response' => json_encode(SignedVerdictFixture::payload(), JSON_THROW_ON_ERROR),
         ]);
         self::assertSame(200, $code);
         self::assertSame('allowed', json_decode($body, true)['status']);
@@ -88,7 +96,8 @@ final class WebExampleTest extends TestCase
         [$code, $body] = $this->request('/access', ['csrf' => $csrf]);
         $verificationId = json_decode($body, true)['verificationId'];
         [$code, $body] = $this->request('/verdict', [
-            'csrf' => $csrf, 'verificationId' => $verificationId, 'verdict' => 'block', 'visitorId' => 'web-visitor',
+            'csrf' => $csrf, 'verificationId' => $verificationId,
+            'response' => json_encode(SignedVerdictFixture::payload('block'), JSON_THROW_ON_ERROR),
         ]);
         $block = json_decode($body, true);
         self::assertSame(401, $code);

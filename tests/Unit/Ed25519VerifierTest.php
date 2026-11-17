@@ -11,6 +11,7 @@ use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\HideguardPhp\Guard;
 use Hachitechs\HideguardPhp\Tests\Support\FrozenClock;
 use Hachitechs\HideguardPhp\Tests\Support\MemoryStorage;
+use Hachitechs\HideguardPhp\Tests\Support\SignedVerdictFixture;
 use Hachitechs\HideguardPhp\Verification\Ed25519Verifier;
 use Hachitechs\HideguardPhp\Verification\VerdictPolicy;
 use PHPUnit\Framework\TestCase;
@@ -29,11 +30,10 @@ final class Ed25519VerifierTest extends TestCase
         );
     }
 
-    private function policy(string $environment = 'production', int $passDuration = 300): ProtectionPolicy
+    private function policy(int $passDuration = 300): ProtectionPolicy
     {
         return new ProtectionPolicy(
             enabled: true,
-            environment: $environment,
             publicKey: 'site-key',
             signaturePublicKey: self::vectors()['generated']['publicKey'],
             passDuration: $passDuration,
@@ -42,13 +42,13 @@ final class Ed25519VerifierTest extends TestCase
     }
 
     /** @dataProvider signedResponses */
-    public function testNodeSignedResponsesVerifyInEveryEnvironment(array $payload): void
+    public function testSignedResponsesVerifyWithoutSelectingAnEnvironment(array $payload): void
     {
         $verifier = new Ed25519Verifier(new FrozenClock(self::SIGNED_AT + 1));
         $result = $verifier->verify(
             $payload,
             new AccessContext('site', 'browser'),
-            $this->policy($payload['environment'])
+            $this->policy()
         );
         $expected = in_array($payload['verdict'], VerdictPolicy::BLOCK_VERDICTS, true) ? 'block' : 'allow';
         self::assertSame($expected, $result->verdict);
@@ -60,6 +60,19 @@ final class Ed25519VerifierTest extends TestCase
     public static function signedResponses(): array
     {
         return array_map(fn(array $payload) => [$payload], self::vectors()['generated']['responses']);
+    }
+
+    public function testUnknownSignedEnvironmentDoesNotRequireConfiguration(): void
+    {
+        $payload = SignedVerdictFixture::payload(environment: 'any-signed-value');
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            publicKey: 'site-key',
+            signaturePublicKey: SignedVerdictFixture::publicKey()
+        );
+        $result = (new Ed25519Verifier())->verify($payload, new AccessContext('site', 'browser'), $policy);
+        self::assertTrue($result->verified);
+        self::assertSame('allow', $result->verdict);
     }
 
     public function testDefaultPolicyAuthorizesASignedProductionVerdict(): void
@@ -92,7 +105,6 @@ final class Ed25519VerifierTest extends TestCase
         $vector['payload']['reasons'][0]['detail'] = 'Different display text';
         $policy = new ProtectionPolicy(
             enabled: true,
-            environment: 'development',
             publicKey: 'key',
             signaturePublicKey: $vector['publicKey']
         );
@@ -128,6 +140,7 @@ final class Ed25519VerifierTest extends TestCase
             [
             ['score' => -1], ['score' => '35'], ['score' => 1.5], ['score' => 9007199254740992],
             ['siteId' => "site\nother"], ['visitorId' => ''], ['requestId' => str_repeat('a', 129)],
+            ['environment' => null], ['environment' => []], ['environment' => "value\nsite=other"],
             ['verdict' => 'unknown'], ['reasons' => ['code' => 'not-a-list']],
             ['reasons' => array_fill(0, 65, ['code' => 'reason'])], ['reasons' => [['code' => "bad\ncode"]]],
             ['reasons' => [null]],
@@ -146,25 +159,18 @@ final class Ed25519VerifierTest extends TestCase
         return $cases;
     }
 
-    public function testCorrectSignatureFromAnotherEnvironmentOrKeyCannotAuthorize(): void
+    public function testSignatureFromAnotherKeyCannotAuthorize(): void
     {
         $payload = self::vectors()['generated']['responses'][6];
-        foreach (
-            [$this->policy('staging'), new ProtectionPolicy(
-                enabled: true,
-                environment: 'production',
-                publicKey: 'key',
-                signaturePublicKey: self::vectors()['real']['publicKey']
-            )] as $policy
-        ) {
-            try {
-                (new Ed25519Verifier(new FrozenClock(self::SIGNED_AT + 1)))
-                    ->verify($payload, new AccessContext('site', 'browser'), $policy);
-                self::fail('Wrong environment/key must not authorize.');
-            } catch (GuardException $error) {
-                self::assertSame(FailureReason::InvalidVerdict, $error->reason);
-            }
-        }
+        $policy = new ProtectionPolicy(
+            enabled: true,
+            publicKey: 'key',
+            signaturePublicKey: self::vectors()['real']['publicKey']
+        );
+        $this->expectException(GuardException::class);
+        $this->expectExceptionMessage('Invalid HideGuard response signature.');
+        (new Ed25519Verifier(new FrozenClock(self::SIGNED_AT + 1)))
+            ->verify($payload, new AccessContext('site', 'browser'), $policy);
     }
 
     /** @dataProvider invalidKeys */

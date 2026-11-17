@@ -31,7 +31,7 @@ try {
             new AccessContext('concurrency', 'worker-' . $id),
             new ProtectionPolicy(
                 enabled: true,
-                environment: 'development',
+                signaturePublicKey: 'fixture-key',
                 publicKey: 'key',
                 limits: new RateLimits(sessionCapacity: 2)
             )
@@ -39,7 +39,7 @@ try {
     } elseif ($mode === 'bind') {
         $guard->bindGrant(
             new AccessContext('concurrency', 'worker-' . $id),
-            new ProtectionPolicy(enabled: true, environment: 'development', publicKey: 'key'),
+            new ProtectionPolicy(enabled: true, signaturePublicKey: 'fixture-key', publicKey: 'key'),
             new ResourceRef('quote', '99')
         );
     } else {
