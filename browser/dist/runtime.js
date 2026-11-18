@@ -343,7 +343,7 @@ function initialize(config, options = {}) {
     }
   });
   try {
-    channel = new BroadcastChannel("hachitech-antidetect");
+    channel = new BroadcastChannel("hachitechs-hideguard");
     channel.onmessage = function(event) {
       if (event.data && event.data.type === "block") {
         if (config.page === "gate") {

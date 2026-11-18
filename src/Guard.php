@@ -444,7 +444,7 @@ final class Guard implements GuardContract, BatchGuardContract
     private function logRejection(GuardException $error): void
     {
         try {
-            $this->logger->notice('Antidetect verdict rejected.', ['reason' => $error->reason->value]);
+            $this->logger->notice('HideGuard verdict rejected.', ['reason' => $error->reason->value]);
         } catch (\Throwable) {
             // Diagnostics must neither roll back a security revocation nor replace its domain error.
         }

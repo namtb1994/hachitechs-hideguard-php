@@ -1,5 +1,5 @@
 {
-  "name": "@hachitech/antidetect-browser-runtime",
+  "name": "@hachitechs/hideguard-browser-runtime",
   "private": true,
   "type": "module",
   "engines": {

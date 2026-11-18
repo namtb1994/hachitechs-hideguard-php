@@ -3,8 +3,10 @@
 This changelog starts with **1.0.0**, the first stable distribution of
 `hachitechs/hideguard-php`.
 
-## Unreleased
+## 2.0.0
 
+- Use consistent HideGuard naming for the browser runtime package, cross-tab
+  notification channel, and verdict rejection logs.
 - Default PHP policies and verdict requests to the live API at `https://hideguard.io`.
 - Remove environment configuration, endpoint mode constants, and unsigned
   `DevelopmentVerifier`. Enabled policies require site and signature public keys.
@@ -20,6 +22,8 @@ This changelog starts with **1.0.0**, the first stable distribution of
   its former second parameter; named arguments are preferred.
 - Replace `DevelopmentVerifier` with `Ed25519Verifier` and provide your site's
   signature public key. Existing grants must be verified again under the new policy.
+- Deploy the rebuilt browser assets and reload open tabs so clients share the
+  renamed cross-tab notification channel.
 
 ## 1.0.0
 

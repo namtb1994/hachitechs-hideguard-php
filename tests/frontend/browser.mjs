@@ -5,7 +5,7 @@ const runtimeSource = readFileSync(new URL('../../browser/dist/runtime.amd.js', 
 export function browser({preflight = {status: 'verification_required'}, report, points = ['all_pages'],
   page = 'gate', pageProtected = true, fail = false, initialState = 'pending', responseCode = 200,
   bodyAlreadyInert = false, enabled = true, adapterSource, endpointUrl, gateUrl, deniedUrl, failUrl,
-  verificationId, failResult = {status: 'verification_failed'}} = {}) {
+  verificationId, BroadcastChannel, failResult = {status: 'verification_failed'}} = {}) {
   const listeners = new Map(), elements = new Map(), scripts = [], requests = [], timers = [], redirects = [];
   const mutations = [], heading = {}, message = {};
   function element(id) {
@@ -49,7 +49,7 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   const window = {
     addEventListener: (name, callback) => listeners.set(name, callback),
     dispatchEvent() {},
-    location: {href: 'https://store.test/antidetectbrowser/gate/index',
+    location: {href: 'https://store.test/hideguard/gate/index',
       reload: () => { reloads++; }, replace: url => redirects.push(url)},
     fetch: async (url, options) => {
       const body = Object.fromEntries(new URLSearchParams(options.body));
@@ -61,7 +61,7 @@ export function browser({preflight = {status: 'verification_required'}, report, 
     }
   };
   const context = vm.createContext({
-    window, document, URL, URLSearchParams, AbortController, Promise, Date,
+    window, document, URL, URLSearchParams, AbortController, Promise, Date, BroadcastChannel,
     MutationObserver: class { constructor(callback) { mutations.push(callback); } observe() {} },
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
     setTimeout: (callback, ms) => { timers.push({callback, ms, active: true}); return timers.length; },

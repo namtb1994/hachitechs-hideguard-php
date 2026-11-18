@@ -73,6 +73,33 @@ test('SDK/network failures keep generic UI locked', async () => {
     assert.equal(app.locked, true);
 });
 
+test('a server-confirmed block redirects another tab with a cached pass', async () => {
+    const peers = new Map();
+    class BroadcastChannel {
+        constructor(name) {
+            this.name = name;
+            peers.set(name, [...(peers.get(name) || []), this]);
+        }
+        postMessage(data) {
+            for (const peer of peers.get(this.name)) {
+                if (peer !== this) peer.onmessage({data});
+            }
+        }
+    }
+    const cachedPass = {status: 'allowed', allowed: true, passDuration: 300, expiresAt: Date.now() + 300000};
+    const otherTab = browser({page: '', gateUrl: '/gate', BroadcastChannel, preflight: cachedPass});
+    const blockedTab = browser({page: '', gateUrl: '/gate', BroadcastChannel,
+        report: () => ({status: 'blocked', blocked: true, blockedUntil: Date.now() + 60000})});
+    await flush();
+    assert.equal(otherTab.locked, false);
+    assert.equal(otherTab.scripts.length, 0);
+    blockedTab.verdict('block');
+    await flush();
+    assert.equal(blockedTab.window.HideGuardAccess.getState().status, 'blocked');
+    assert.equal(otherTab.redirects.length, 1);
+    assert.equal(new URL(otherTab.redirects[0]).pathname, '/gate');
+});
+
 test('source contains no framework globals, imports or commerce route decisions', () => {
     for (const file of ['runtime.js', 'interaction-lock.js']) {
         const source = readFileSync(new URL('../../browser/src/' + file, import.meta.url), 'utf8');
